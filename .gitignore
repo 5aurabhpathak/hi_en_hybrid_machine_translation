@@ -1,0 +1,8 @@
+*.out
+data/
+__pycache__/
+__init__.py
+*.pyc
+*~
+*.swo
+*.swp
