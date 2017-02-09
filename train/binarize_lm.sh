@@ -11,7 +11,7 @@ fi
 
 function binarize {
 	cd $1
-	for x in $(ls -1 | grep blm)
+	for x in $(ls -1 | grep arpa)
 	do build_binary -T . $x $(echo $x | grep -o '^.*\.')probing.1.5.blm &
 	done
 	cd -
