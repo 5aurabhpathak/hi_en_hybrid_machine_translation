@@ -1,0 +1,29 @@
+#!/bin/bash
+#Author: Saurabh Pathak
+#Second step
+#performs casing on monolingual as well as parallel corpus (english part)
+#uses perl scripts provided with moses
+#Run after - 'download_corpora.sh'
+#Requires - Monolingual Corpus and Parallel Corpus in respective directories
+echo Generating truecase model...
+cd $THESISDIR/data/corpus/monolingual
+time $SCRIPTS_ROOTDIR/recaser/train-truecaser.perl --model ../truecase-model.en --corpus monolingual.tok.en
+echo truecasing monolingual corpus...
+time $SCRIPTS_ROOTDIR/recaser/truecase.perl --model ../truecase-model.en < monolingual.tok.en > monolingual.true.en
+echo lowercasing monolingual corpus...
+time $SCRIPTS_ROOTDIR/tokenizer/lowercase.perl < monolingual.tok.en > monolingual.lc.en
+cd ../bilingual/parallel
+echo truecasing english side of bilingual corpus...
+time $SCRIPTS_ROOTDIR/recaser/truecase.perl --model ../../truecase-model.en < IITB.en-hi.tok.en > IITB.en-hi.true.en
+echo lowercasing english side of bilingual corpus...
+time $SCRIPTS_ROOTDIR/tokenizer/lowercase.perl < IITB.en-hi.tok.en > IITB.en-hi.lc.en
+echo processing english side of test and development sets
+cd ../dev_test_tokenized
+echo truecasing dev set...
+time $SCRIPTS_ROOTDIR/recaser/truecase.perl --model ../../truecase-model.en < dev.tok.en > dev.true.en
+echo lowercasing dev set...
+time $SCRIPTS_ROOTDIR/tokenizer/lowercase.perl < dev.tok.en > dev.lc.en
+echo lowercasing test set...
+time $SCRIPTS_ROOTDIR/tokenizer/lowercase.perl < test.tok.en > test.lc.en
+echo done.
+exit 0

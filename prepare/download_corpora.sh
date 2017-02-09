@@ -3,7 +3,7 @@
 #First step
 #downloads and extracts the corpora
 #corpus downloaded: www.statmt.org/lm-benchmark (4.3 GB uncompressed, 32.1M senetences, 1B < vocabulary size!) and IITB Hindi-English Parallel corpus (1.5M pair of senetences)
-cd $HOME/src/python/nlp/mtech-thesis/data/downloaded_corpora
+cd $THESISDIR/data/downloaded_corpora
 echo Downloading monolingual data...
 wget -nc http://www.statmt.org/lm-benchmark/1-billion-word-language-modeling-benchmark-r13output.tar.gz
 echo -n Extracting...
