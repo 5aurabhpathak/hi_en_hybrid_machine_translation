@@ -11,10 +11,13 @@ fi
 
 function binarize {
 	cd $1
+	echo $PWD
 	for x in $(ls -1 | grep arpa)
-	do build_binary -T . $x $(echo $x | grep -o '^.*\.')probing.1.5.blm &
+	do
+		out="$(echo $x | grep -o '^.*\.')probing.1.5.blm"
+		test -s $out && echo $out already done, skipping... || build_binary -T . $x $out
 	done
-	cd -
+	cd - >& /dev/null
 }
 
 cd $THESISDIR/data

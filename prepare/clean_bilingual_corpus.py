@@ -38,7 +38,7 @@ def clean():
             e, h = en_line.split(), hi_line.split()
             j, k = len(h), len(e)
             i = max(j, k)
-            if not 0 < j < 100 or not 0 < k < 100 or (i > 10 and not 1 / 2 < j / k < 2) or (i <= 10 and not 1 / 9 < j / k < 9): #<--required by giza
+            if not 0 < j <= 65 or not 0 < k <= 65 or (i > 10 and not 1 / 2 < j / k < 2) or (i <= 10 and not 1 / 9 < j / k < 9): #<--required by giza
                 hi_err_op.write(hi_line)
                 en_err_op.write(en_line)
                 continue

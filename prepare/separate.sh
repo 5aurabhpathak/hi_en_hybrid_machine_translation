@@ -7,9 +7,9 @@ then
 	exit 1
 fi
 cd $THESISDIR/prepare
-./select_random.py -f hi -en en -k $1 --prefix ../data/corpus/bilingual/parallel/IITB.en-hi.clean --output-dir ../data/corpus/bilingual/parallel/
+./select_random.py -f hi -e en -k $1 --prefix ../data/corpus/bilingual/parallel/IITB.en-hi.clean --output-dir ../data/corpus/bilingual/parallel
 cd ../data/corpus/bilingual/parallel
 mkdir -p lc
 $SCRIPTS_ROOTDIR/tokenizer/lowercase.perl < IITB.en-hi.train.en > lc/IITB.en-hi.train.en
-cp -n IITB.en-hi.train.hi lc/IITB.en-hi.train.hi
+cp IITB.en-hi.train.hi lc/IITB.en-hi.train.hi
 exit 0

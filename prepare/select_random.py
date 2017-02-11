@@ -33,7 +33,7 @@ if __name__ == '__main__':
         if o in ('-h', '--help'): usage()
         elif o == '-f': source = a
         elif o == '-e': target = a
-        elif o == '-k': k = a
+        elif o == '-k': k = int(a)
         elif o == '--prefix': prefix, prefix1 = a, '.'.join(a.split('/')[-1].split('.')[:-1])
         elif o == '--output-dir': output_dir = a if a[-1] == '/' else a + '/'
         else:
