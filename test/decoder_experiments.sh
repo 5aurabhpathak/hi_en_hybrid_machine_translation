@@ -25,7 +25,7 @@ helper() {
 		then
 			echo running moses with distortion limit $1 and stack size $s...
 			out="translated.s$s.d$1.out"
-			time moses -dl $1 -s $s -f table/moses.ini < $file > $out 2> /dev/null
+			time moses -dl $1 -s $s -f $2 -threads 16 -v 0 < $file > $out
 			$SCRIPTS_ROOTDIR/generic/multi-bleu.perl $ref_file < $out > $bleu
 		else echo $bleu exists. Moving on...
 		fi
@@ -42,7 +42,7 @@ test_suite () {
 	flag=0
 	for dl in {6..14}
 	do
-		helper $dl
+		helper $dl $1
 		if [ 1 -eq $(echo $curbig $biggest | awk '{if($1 < $2) print 1; else print 0}') ]
 		then if [ flag -eq 1 ]
 		then echo none of the scores obtained with dl $dl were bigger than previous dl step. Stopping here. && break
@@ -51,8 +51,8 @@ test_suite () {
 		else biggest=$curbig
 		fi
 	done
-	helper -1
-	helper 0
+	helper -1 $1
+	helper 0 $1
 }
 
 duration() {
@@ -67,12 +67,13 @@ duration() {
 file=$(change_absolute $1)
 ref_file=$(change_absolute $2)
 output_dir=$(echo $file | grep -o '[^/]*$' | cut -d. -f1-2)
-cd $THESISDIR/data/results
+mkdir -p $THESISDIR/data/results/$output_dir
+cd $THESISDIR/data/results/$output_dir
 echo Starting tests on untuned moses.ini on $(date)...
 a=$(date +%s)
-mkdir -p $output_dir/untuned
-cd $output_dir/untuned
-test_suite ../../../train/model/moses.ini
+mkdir -p untuned
+cd untuned
+test_suite $THESISDIR/data/train/truecased/model/moses.ini
 echo finished. Took $(duration $a) to complete.
 
 echo Starting tests on tuned moses.ini on $(date)...
@@ -82,7 +83,7 @@ else
 	b=$(date +%s)
 	mkdir -p ../tuned
 	cd ../tuned
-	test_suite ../../../mert-work/moses.ini
+	test_suite $THESISDIR/data/mert-work/truecased/moses.ini
 	echo finished. Took $(duration $b) to complete.
 fi
 echo Script completed on $(date), took $(duration $a) total.

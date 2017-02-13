@@ -2,36 +2,31 @@
 #Author: Saurabh Pathak
 '''graph visualizer for experiments'''
 from matplotlib import pyplot as pl
-from numpy import zeros
-from os import chdir
+from statistics import mean
+from os import environ
 
-def figplot(prefix, output='../../../../'):
+def figplot(prefix, output=environ['THESISDIR']+'/data/'):
     with open(prefix+'.en', encoding='utf-8') as en_ip, open(prefix+'.hi', encoding='utf-8') as hi_ip:
-        de, dh, f, num_lines = dict(), dict(), dict(), len(en_ip.readlines())
-        en_ip.seek(0)
+        de, dh, f = [], [], []
         for hi_line, en_line in zip(hi_ip, en_ip):
-            i, j = len(en_line), len(hi_line)
-            de[i] = de.get(i, 0) + 1
-            dh[i] = dh.get(i, 0) + 1
-            f[round(i/j)] = f.get(round(i/j), 0) + 1
-    pl.figure('Sentence lengths / Fertility -- '+prefix, figsize=(19,10))
-    #pl.subplot(131)
-    pl.title('en')
-    pl.plot(range(len(de)), list(de.values()))
-    pl.xticks(range(0, len(de), 100), list(de.keys())[::100])
-    pl.tight_layout(0)
-    #pl.subplot(132)
-    #pl.title('hi')
-    #pl.plot(list(range(1, num_lines+1)), lh)
-    #pl.subplot(133)
-    #pl.title('fertility ratios')
-    #pl.plot(list(range(1, num_lines+1)), fr)
+            i, j = len(en_line.split()), len(hi_line.split())
+            de += i,
+            dh += j,
+            if j != 0: f += i/j,
+    pl.figure('Sentence lengths / Fertility -- '+prefix, figsize=(12,7))
+    pl.suptitle('Mean fertility ratio: {}'.format(round(mean(f), 4)))
+
+    def plotter(t,n,a):
+        pl.subplot(n)
+        pl.title(t)
+        pl.hist(a, bins=range(0,101,10))
+        pl.xlim(xmin=0)
+        pl.ylim(ymin=0)
+
+    plotter('en', 121, de)
+    plotter('hi', 122, dh)
     pl.savefig(output+prefix.split('/')[-1]+'.png', format='png')
+    pl.show()
 
 if __name__=="__main__":
-    chdir('../data/corpus/bilingual/parallel/')
-    figplot('IITB.en-hi.true')
-    #figplot('IITB.en-hi.clean')
-    #figplot('IITB.en-hi.train')
-    #figplot('filtered_out/IITB.en-hi.err')
-    #figplot('selected_out/IITB.en-hi.sep')
+    figplot(environ['THESISDIR']+'/data/corpus/bilingual/parallel/IITB.en-hi.true')

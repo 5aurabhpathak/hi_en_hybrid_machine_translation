@@ -78,7 +78,7 @@ function retrain_transliteration_module {
 	then
 		cd $OUT_DIR
 		rm -rf model/* lm/* training/giza training/giza-inverse training/prepared
-		cd ..
+		cd - > /dev/null
 		learn_transliteration_model
 	fi
 }
