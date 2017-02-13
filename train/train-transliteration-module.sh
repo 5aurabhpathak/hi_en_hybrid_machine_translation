@@ -2,17 +2,34 @@
 #Author: Saurabh Pathak
 #Credits: Adapted from moses transliteration training script of the same name.
 #This adaptation is specific to my use and is not general purpose like the script.
+function usage {
+	echo "usage: train-transliteration-module.sh corpus_stem alignmentfile outputdir"
+	exit 1
+}
+
+if [ $# -ne 3 ]
+then usage
+fi
+
+change_absolute () {
+	if [ "${1:0:1}" = "/" ]
+	then echo $1
+	else echo "$PWD/$1"
+	fi
+}
+
 function main {
 	export PYTHONIOENCODING=utf-8
-	cd $THESISDIR/data
-	mkdir -p transliterate
-	OUT_DIR=$PWD/transliterate
-	ln -s $PWD/corpus/bilingual/parallel/IITB.en-hi.train.hi $OUT_DIR/f
-	ln -s $PWD/corpus/bilingual/parallel/IITB.en-hi.train.en $OUT_DIR/e
-	ln -s $PWD/train/model/aligned.grow-diag-final-and $OUT_DIR/a
+	mkdir -p $3
+	OUT_DIR=$(change_absolute $3)
+	IN_DIR=$(change_absolute $1)
+	ln -s $IN_DIR.hi $OUT_DIR/f
+	ln -s $IN_DIR.en $OUT_DIR/e
+	ln -s $(change_absolute $2) $OUT_DIR/a
 	mine_transliterations
 	train_transliteration_module
 	retrain_transliteration_module
+	rm -rf model # <-- stray empty dir created by train-model.perl
 	echo "Training Transliteration Module - End ". $(date)
 }
 
@@ -66,4 +83,5 @@ function retrain_transliteration_module {
 	fi
 }
 
-main
+main $1 $2 $3
+exit 0
