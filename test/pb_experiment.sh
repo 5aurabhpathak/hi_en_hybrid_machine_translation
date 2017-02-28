@@ -26,7 +26,7 @@ helper() {
 }
 
 test_suite () {
-	for dl in {6..15}
+	for dl in {6..12}
 	do helper $dl $1 $2
 	done
 	helper -1 $1 $2
@@ -46,26 +46,31 @@ file=$(change_absolute $1)
 ref_file=$(change_absolute $2)
 output_dir=$(change_absolute $3)
 test_dir=$(echo $file | grep -o '[^/]*$' | cut -d. -f1-2)
+if [ "$5" = "untuned" ]
+then ini="$THESISDIR/data/train/$4/model/pb/moses.ini"
+else ini="$THESISDIR/data/mert-work/pb/moses.ini"
+fi
 mkdir -p $output_dir
 cd $output_dir
 mkdir -p pb/$4/$test_dir
 cd pb/$4/$test_dir
 if [ ! -d "table" ]
 then
-	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl table $THESISDIR/data/train/$4/model/pb/moses.ini $file -Binarizer processPhraseTableMin >& /dev/null
-	mv table/moses.ini table/moses.untuned.ini
+	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl table $ini $file -Binarizer processPhraseTableMin >& /dev/null
+	mv table/moses.ini table/moses.$5.ini
+else $SCRIPTS_ROOTDIR/ems/support/substitute-filtered-tables.perl table/moses.* < $ini > table/moses.$5.ini
 fi
 echo Starting $4 tests on $(date)...
 a=$(date +%s)
 mkdir -p $5/100
 cd $5/100
-test_suite ../../table/moses.untuned.ini 100
+test_suite ../../table/moses.$5.ini 100
 cd ..
 for x in {1..4}
 do
 	stack=$(($x*500))
 	mkdir -p $stack && pushd $stack
-	test_suite ../../table/moses.untuned.ini $stack
+	test_suite ../../table/moses.$5.ini $stack
 	popd
 done
 echo Script completed on $(date), took $(duration $a) total.

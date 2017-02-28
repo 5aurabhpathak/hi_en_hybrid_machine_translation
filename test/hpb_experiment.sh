@@ -2,7 +2,7 @@
 #Author: Saurabh Pathak
 #set of experiments for parameters on HPBSMT
 #parameters tested: cube-pruning-pop-limit
-if [[ $# -ne 5 || $(ps -o stat= -p $$) =~ "+" || ($5 != "tuned" && $5 != "untuned") || ($4 != "lowercased" && $4 != "truecased") ]]
+if [[ $# -ne 5 || $(ps -o stat= -p $$) =~ "+" || ("$5" != "tuned" && "$5" != "untuned") || ("$4" != "lowercased" && "$4" != "truecased") ]]
 then echo "usage: nohup decoder_experiments.sh test_file reference_file outputdir lowercased|truecased tuned|untuned &" && exit 1
 fi
 
@@ -14,7 +14,7 @@ change_absolute () {
 }
 
 helper() {
-	bleu="l$1.bleu"
+	bleu="l$2.bleu"
 	if [ ! -s "$bleu" ]
 	then
 		echo running moses with cube-pruning-pop-limit $2...
@@ -26,12 +26,10 @@ helper() {
 }
 
 test_suite () {
-	for x in {1..4}
+	for x in {1..5}
 	do
 		cppl=$(($x*500))
-		mkdir -p $cppl && pushd $cppl
 		helper $1 $cppl
-		popd
 	done
 }
 
@@ -52,15 +50,21 @@ mkdir -p $output_dir
 cd $output_dir
 mkdir -p hpb/$4/$test_dir
 cd hpb/$4/$test_dir
+if [ "$5" = "untuned" ]
+then ini="$THESISDIR/data/train/$4/model/hpb/moses.ini"
+else ini="$THESISDIR/data/mert-work/hpb/moses.ini"
+fi
 if [ ! -d "table" ]
 then
-	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl table $THESISDIR/data/train/$4/model/hpb/moses.ini $file -Binarizer processPhraseTableMin >& /dev/null
-	mv table/moses.ini table/moses.untuned.ini
+	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl table $ini $file -Binarizer 'CreateOnDiskPt 1 1 4 100 2' -Hierarchical >& /dev/null
+	mv table/moses.ini table/moses.$5.ini
+	rm table/phrase-table.0-0.1.1 info input.*
+else $SCRIPTS_ROOTDIR/ems/support/substitute-filtered-tables.perl table/moses.* < $ini > table/moses.$5.ini
 fi
 echo Starting $4 tests on $(date)...
 a=$(date +%s)
 mkdir -p $5
 cd $5
-test_suite ../../table/moses.untuned.ini
+test_suite ../table/moses.$5.ini
 echo Script completed on $(date), took $(duration $a) total.
 exit 0
