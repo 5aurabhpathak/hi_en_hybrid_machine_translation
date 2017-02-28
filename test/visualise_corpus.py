@@ -7,14 +7,15 @@ from os import environ
 
 def figplot(prefix, output=environ['THESISDIR']+'/data/'):
     with open(prefix+'.en', encoding='utf-8') as en_ip, open(prefix+'.hi', encoding='utf-8') as hi_ip:
-        de, dh, f = [], [], []
+        de, dh, f, k = [], [], [], 0
         for hi_line, en_line in zip(hi_ip, en_ip):
             i, j = len(en_line.split()), len(hi_line.split())
             de += i,
             dh += j,
             if j != 0: f += i/j,
+            k += 1
     pl.figure('Sentence lengths / Fertility -- '+prefix, figsize=(12,7))
-    pl.suptitle('Mean fertility ratio: {}'.format(round(mean(f), 4)))
+    pl.suptitle('Mean fertility ratio: {}\nNumber of pairs: {}'.format(round(mean(f), 4), k))
 
     def plotter(t,n,a):
         pl.subplot(n)

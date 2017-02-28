@@ -43,8 +43,8 @@ def clean():
                 en_err_op.write(en_line)
                 continue
 
-            hi_op.write(' '.join(h)+'\n') #<--removes redundant spaces.
-            en_op.write(' '.join(e)+'\n')
+            hi_op.write(' '.join(h).replace('\u007C', '.').replace('\u0964', '.')+'\n') #<--removes redundant spaces and replaces poornaviram with .
+            en_op.write(' '.join(e).replace('\u007C', '.').replace('\u0964', '.')+'\n')
     print('complete')
 
 def usage():
