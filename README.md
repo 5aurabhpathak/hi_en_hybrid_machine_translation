@@ -1,3 +1,5 @@
 #M. Tech - thesis
 ##Current status
-Testing Moses Baseline...
+Moses baseline complete.
+Transliteration complete.
+Designing EBMT...
