@@ -1,20 +1,29 @@
 #!/bin/env python3.6
 #Author: Saurabh Pathak
-'''parallel corpus cleaner -- two stage'''
-import getopt, sys
-from os import makedirs
+'''parallel corpus cleaner -- three stage'''
+import getopt, sys, os, collections
 
 def clean():
-    '''stage 1 - source sentences containing hindi letters are dropped based on unicode codepoint range for devanagari and vice versa.
-    stage 2 - heuristic: sentence pairs differing greatly in size are probably misaligned and/or malformed. Prefer over moses's clean-corpus-n script. This function handles size difference more elaborately.'''
+    '''stage 1 - removes duplicate source AND translation pairs. Keeps same source but different translations.
+    stage 2 - source sentences containing hindi letters are dropped based on unicode codepoint range for devanagari and vice versa.
+    stage 3 - heuristic: sentence pairs differing greatly in size are probably misaligned and/or malformed. Prefer over moses's clean-corpus-n script. This function handles size difference more elaborately.'''
     prohibited_hi = 'abcdefghijklmnopqrstuvwxyz'
-    makedirs(output_dir+'filtered_out', mode=0o755, exist_ok=True)
+    os.makedirs(output_dir+'filtered_out', mode=0o755, exist_ok=True)
+    unique_dict = collections.defaultdict(set)
 
     with open(prefix+'.'+target, encoding='utf-8') as en_ip, open(prefix+'.'+source, encoding='utf-8') as hi_ip, open(output_dir+prefix1+'.clean.'+target, 'w', encoding='utf-8') as en_op, open(output_dir+prefix1+'.clean.'+source, 'w', encoding='utf-8') as hi_op, open(output_dir+'filtered_out/'+prefix1+'.err.'+source, 'w', encoding='utf-8') as hi_err_op, open(output_dir+'filtered_out/'+prefix1+'.err.'+target, 'w', encoding='utf-8') as en_err_op:
 
         print('Cleaning...', end='', flush=True)
         for hi_line, en_line in zip(hi_ip, en_ip):
             #stage 1
+            translations = unique_dict[hi_line]
+            if en_line in translations: #<-- removes duplicate source and translation but keeps multiple translations of same source if any
+                hi_err_op.write(hi_line)
+                en_err_op.write(en_line)
+                continue
+            translations.add(en_line)
+
+            #stage 2
             flag = False
             for c in hi_line:
                 if c in prohibited_hi or c.lower() in prohibited_hi or (not 2304 <= ord(c) <= 2431 and not 0 <= ord(c) < 128):
@@ -34,7 +43,7 @@ def clean():
                 en_err_op.write(en_line)
                 continue
             
-            #stage 2
+            #stage 3
             e, h = en_line.split(), hi_line.split()
             j, k = len(h), len(e)
             i = max(j, k)
