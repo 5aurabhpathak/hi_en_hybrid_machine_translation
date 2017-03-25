@@ -2,7 +2,6 @@
 #Author: Saurabh Pathak
 '''this module performs the first stage of the translation system
 adapted from description in 2010 paper by Peter Koehn et al.'''
-#from editdist import edit_dist
 import os, pickle, math, collections
 
 class _Match: pass # <-- containers for attributes. Could use a dict instead but that means more syntax
@@ -17,15 +16,19 @@ class EBMT:
         self.__sflen, self.__f, self.__fl = len(self.__sf), f.split(), f.splitlines()
 
     def match(self, p):
-        p = p.split()
+        p, d1, d2 = p.split(), collections.defaultdict(list), collections.defaultdict(list)
         l = len(p)
+        for i in range(l):
+            d1[p[i]].append(i)
+            if i < l-1: d2[' '.join(p[i:i+1])].append(i)
         self.__ceilingcost = math.ceil(.3 * l)
         M = self.__find_matches(p, l)
-        return self.__find_segments(M, l)
+        return self.__find_segments(M, l, d1, d2)
 
-    def __find_segments(self, M, l):
+    def __find_segments(self, M, l, d1, d2):
         A, S = [], []
         for k, v in M.items():
+            if len(v) == 0: continue
             a = _Item()
             a.M, a.s = v, self.__fl[k]
             a.sumlength = sum([m.length for m in v])
@@ -35,12 +38,27 @@ class EBMT:
         while len(A) > 0:
             a = A.pop()
             if a.M[0].length - l > self.__ceilingcost or max(a.M[0].length, l) - a.sumlength > self.__ceilingcost: continue
-            cost = self.__parse_validate(a.s, a.M)
+            t = a.s.split()
+            u = len(t)
+            for i in range(u):
+                if t[i] in d1:
+                    for start in d1[t[i]]:
+                        end, m = start, _Match()
+                        m.segid, m.length, m.start, m.end = a.M[0].segid, u, i, i
+                        m.remain = m.length - m.end
+                        a.M = self.__add_match(m, a.M, start, end, l-end)
+                if i < u-1 and ' '.join(t[i:i+1]) in d2:
+                    for start in d2[' '.join(t[i:i+1])]:
+                        end, m = start+1, _Match()
+                        m.segid, m.length, m.start, m.end = a.M[0].segid, u, i, i+1
+                        m.remain = m.length - m.end
+                        a.M = self.__add_match(m, a.M, start, end, l-end)
+            cost = self.__parse_validate(a.M)
             if cost < self.__ceilingcost: self.__ceilingcost, S = cost, []
             if cost == self.__ceilingcost: S.append(a.s)
         return S
 
-    def __parse_validate(self, s, M):
+    def __parse_validate(self, M):
         A = []
         for m1 in M:
             for m2 in M:
@@ -71,23 +89,23 @@ class EBMT:
         for start in range(l):
             self.__first_match, self.__last_match = 0, self.__sflen-1
             for end in range(start + 3, l+1):
-                remain = l - end
                 N = self.__find_in_suffix_array(' '.join(p[start:end]), end-start)
                 if N is None: break
-                for m in N:
-                    m.leftmin = abs(m.start - start)
-                    if m.leftmin == 0 and start > 0: m.leftmin = 1
-                    m.rightmin = abs(m.remain - remain)
-                    if m.rightmin == 0 and remain > 0: m.rightmin = 1
-                    m.leftmax, m.rightmax = max(m.start, start), max(m.remain, remain)
-                    mincost, maxcost = m.leftmin + m.rightmin, m.leftmax + m.rightmax
-                    self.__ceilingcost = min(maxcost, self.__ceilingcost) # <-- described in paper text but not in their pseudocode
-                    if mincost > self.__ceilingcost: continue
-                    m.internal, m.pstart, m.pend, k = 0, start, end, [mm for mm in M[m.segid] if not (mm.start >= m.start and mm.end <= m.end)]
-                    k.append(m)
-                    M[m.segid] = k
+                for m in N: M[m.segid] = self.__add_match(m, M[m.segid], start, end, l-end)
         return M
 
+    def __add_match(self, m, M, start, end, remain):
+            m.leftmin = abs(m.start - start)
+            if m.leftmin == 0 and start > 0: m.leftmin = 1
+            m.rightmin = abs(m.remain - remain)
+            if m.rightmin == 0 and remain > 0: m.rightmin = 1
+            m.leftmax, m.rightmax = max(m.start, start), max(m.remain, remain)
+            mincost, maxcost = m.leftmin + m.rightmin, m.leftmax + m.rightmax
+            self.__ceilingcost = min(maxcost, self.__ceilingcost) # <-- described in paper text but not in their pseudocode
+            if mincost > self.__ceilingcost: return M
+            m.internal, m.pstart, m.pend, k = 0, start, end, [mm for mm in M if not (mm.start >= m.start and mm.end <= m.end)]
+            k.append(m)
+            return k
 
     def __find_in_suffix_array(self, p, plen):
 
@@ -116,7 +134,7 @@ class EBMT:
         for i in range(self.__first_match, self.__last_match + 1):
             m = _Match()
             m.segid, m.length, m.start = self.__sd[self.__sf[i]]
-            m.end = m.start + plen - 1
+            m.end = m.start + plen
             m.remain = m.length - m.end
             N.append(m)
         return N
