@@ -26,14 +26,14 @@ function main {
 		h="-hierarchical -glue-grammar"
 		H="-Hierarchical"
 		B="CreateOnDiskPt 1 1 4 100 2"
-		D="-threads 16 -drop-unknown -v 0"
+		D="-threads 4 -drop-unknown -v 0"
 	elif [ "$4" = "pb" ]
 	then
 		echo Will train phrase based model...
 		h=""
 		H=""
 		B="processPhraseTableMin"
-		D="-threads 16 -drop-unknown -v 0 -distortion-limit 0"
+		D="-threads 4 -drop-unknown -v 0 -distortion-limit 0"
 	else echo Wrong model requested: $4 && exit 1
 	fi
 	OUT_DIR=$(change_absolute $3)
@@ -52,9 +52,9 @@ function main {
 function learn_transliteration_model {
 	cp $OUT_DIR/training/corpus$1.en $OUT_DIR/lm/target
 	echo Align Corpus
-	$SCRIPTS_ROOTDIR/training/train-model.perl -mgiza -mgiza-cpus 16 -dont-zip -last-step 3 -external-bin-dir /opt/mgiza/bin -f hi -e en -alignment grow-diag-final-and -score-options '--KneserNey' -corpus $OUT_DIR/training/corpus$t -corpus-dir $OUT_DIR/training/prepared -giza-e2f $OUT_DIR/training/giza -giza-f2e $OUT_DIR/training/giza-inverse -alignment-file $OUT_DIR/model/aligned -alignment-stem $OUT_DIR/model/aligned -cores 16 -parallel -sort-buffer-size 10G -sort-batch-size 512 -sort-parallel 16
+	$SCRIPTS_ROOTDIR/training/train-model.perl -mgiza -mgiza-cpus 4 -dont-zip -last-step 3 -external-bin-dir /opt/mgiza/bin -f hi -e en -alignment grow-diag-final-and -score-options '--KneserNey' -corpus $OUT_DIR/training/corpus$t -corpus-dir $OUT_DIR/training/prepared -giza-e2f $OUT_DIR/training/giza -giza-f2e $OUT_DIR/training/giza-inverse -alignment-file $OUT_DIR/model/aligned -alignment-stem $OUT_DIR/model/aligned -cores 4 -parallel -sort-buffer-size 2G -sort-batch-size 256 -sort-parallel 4
 	echo Train Translation Models
-	$SCRIPTS_ROOTDIR/training/train-model.perl -dont-zip -first-step 4 -last-step 6 -external-bin-dir /opt/mgiza/bin -f hi -e en -alignment grow-diag-final-and -score-options '--KneserNey' -lexical-file $OUT_DIR/model/lex -alignment-file $OUT_DIR/model/aligned -alignment-stem $OUT_DIR/model/aligned -corpus $OUT_DIR/training/corpus$t -model-dir $OUT_DIR/model -cores 16 -sort-buffer-size 10G -sort-batch-size 512 -sort-parallel 16 $h
+	$SCRIPTS_ROOTDIR/training/train-model.perl -dont-zip -first-step 4 -last-step 6 -external-bin-dir /opt/mgiza/bin -f hi -e en -alignment grow-diag-final-and -score-options '--KneserNey' -lexical-file $OUT_DIR/model/lex -alignment-file $OUT_DIR/model/aligned -alignment-stem $OUT_DIR/model/aligned -corpus $OUT_DIR/training/corpus$t -model-dir $OUT_DIR/model -cores 4 -sort-buffer-size 2G -sort-batch-size 256 -sort-parallel 4 $h
 	echo Train Language Models
 	lmplz -o 5 --interpolate_unigrams 0 --discount_fallback --text $OUT_DIR/lm/target --arpa $OUT_DIR/lm/targetLM
 	build_binary $OUT_DIR/lm/targetLM $OUT_DIR/lm/targetLM.bin
@@ -80,11 +80,11 @@ function train_transliteration_module {
 	test -e $OUT_DIR/training/corpusA.en && learn_transliteration_model A || learn_transliteration_model
 	echo Running Tuning for Transliteration Module
 	touch $OUT_DIR/tuning/moses.table.ini
-	$SCRIPTS_ROOTDIR/training/train-model.perl  -mgiza -mgiza-cpus 16 -dont-zip -first-step 9 -external-bin-dir /opt/mgiza/bin -f hi -e en -alignment grow-diag-final-and -score-options '--KneserNey' -config $OUT_DIR/tuning/moses.table.ini -lm 0:5:$OUT_DIR/tuning/moses.table.ini:8 $h -model-dir $OUT_DIR/model
+	$SCRIPTS_ROOTDIR/training/train-model.perl  -mgiza -mgiza-cpus 4 -dont-zip -first-step 9 -external-bin-dir /opt/mgiza/bin -f hi -e en -alignment grow-diag-final-and -score-options '--KneserNey' -config $OUT_DIR/tuning/moses.table.ini -lm 0:5:$OUT_DIR/tuning/moses.table.ini:8 $h -model-dir $OUT_DIR/model
 	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl $OUT_DIR/tuning/filtered $OUT_DIR/tuning/moses.table.ini $OUT_DIR/tuning/input -Binarizer "$B" $H
 	rm $OUT_DIR/tuning/moses.table.ini
 	$SCRIPTS_ROOTDIR/ems/support/substitute-filtered-tables.perl $OUT_DIR/tuning/filtered/moses.ini < $OUT_DIR/model/moses.ini > $OUT_DIR/tuning/moses.filtered.ini
-	$SCRIPTS_ROOTDIR/training/mert-moses.pl $OUT_DIR/tuning/input $OUT_DIR/tuning/reference /opt/moses/bin/moses $OUT_DIR/tuning/moses.filtered.ini --nbest 100 --working-dir $OUT_DIR/tuning/tmp --rootdir /opt/moses/bin --decoder-flags "$D" -mertdir /opt/moses/bin -threads=16 --no-filter-phrase-table
+	$SCRIPTS_ROOTDIR/training/mert-moses.pl $OUT_DIR/tuning/input $OUT_DIR/tuning/reference /opt/moses/bin/moses $OUT_DIR/tuning/moses.filtered.ini --nbest 100 --working-dir $OUT_DIR/tuning/tmp --rootdir /opt/moses/bin --decoder-flags "$D" -mertdir /opt/moses/bin -threads=4 --no-filter-phrase-table
 	cp $OUT_DIR/tuning/tmp/moses.ini $OUT_DIR/tuning/moses.ini
 	$SCRIPTS_ROOTDIR/ems/support/substitute-weights.perl $OUT_DIR/model/moses.ini $OUT_DIR/tuning/moses.ini $OUT_DIR/tuning/moses.tuned.ini
 }

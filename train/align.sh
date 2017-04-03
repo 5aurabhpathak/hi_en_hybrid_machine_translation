@@ -22,5 +22,5 @@ OUT_DIR=$(change_absolute $1)
 IN_DIR=$(change_absolute $2)
 #imporant export. crashes otherwise.
 export PYTHONIOENCODING=utf-8
-$SCRIPTS_ROOTDIR/training/train-model.perl -root-dir $OUT_DIR -corpus $IN_DIR -f hi -e en -alignment grow-diag-final-and --last-step 3 -external-bin-dir /opt/mgiza/bin -mgiza -mgiza-cpus 16 -cores 16 -parallel -sort-buffer-size 10G -sort-batch-size 512 -sort-parallel 16
+$SCRIPTS_ROOTDIR/training/train-model.perl -root-dir $OUT_DIR -corpus $IN_DIR -f hi -e en -alignment grow-diag-final-and --last-step 3 -external-bin-dir /opt/mgiza/bin -mgiza -mgiza-cpus 4 -cores 4 -parallel -sort-buffer-size 2G -sort-batch-size 256 -sort-parallel 4
 exit 0
