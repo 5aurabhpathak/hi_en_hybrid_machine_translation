@@ -3,82 +3,32 @@
 '''this module performs the first stage of the translation system
 partially adapted from description in 2010 paper by Peter Koehn et al.'''
 from editdist import edit_dist
-import os, pickle, math, collections
+import os, pickle, math, collections, bisect
 
 class _Match: pass # <-- containers for attributes. Could use a dict instead but that means more syntax
 class _Item: pass
 
-class EBMT:
+class _BestMatch:
     '''Handler class for EBMT - translation unit is a sentence.'''
 
-    def __init__(self, dbir, alignment, *, thresh=.3):
+    def __init__(self, dbdir, *, thresh=.3):
         self.__threshold = thresh
-        with open(dbir+'suffixarray.data', 'rb') as sf, open(dbir+'ebmt.data', 'rb') as sd, open(dbir+'IITB.en-hi.train.hi') as f, open(dbir+'IITB.en-hi.train.en') as e, open(alignment) as a: self.__sf, self.__sd, f, self.__e, self.__a = pickle.load(sf), pickle.load(sd), f.read(), e.read().splitlines(), a.read().splitlines()
+        with open(dbdir+'suffixarray.data', 'rb') as sf, open(dbdir+'ebmt.data', 'rb') as sd: self.__sf, self.__sd = pickle.load(sf), pickle.load(sd)
         self.__sflen, self.__f, self.__fl = len(self.__sf), f.split(), f.splitlines()
 
-    def __align(self, p, l, S):
-
-        def mismatch(istart, iend, sstart, sentend):
-            nonlocal matched_target, insertion, alignment, l, p
-            print(istart, iend, sstart, sentend)
-            for i in range(sstart, sentend):
-                for t in alignment.get(i, []): matched_target[t] = False
-            ins = min([x for y in range(sstart, sentend) for x in alignment.get(y, [])], default=None)
-            print(ins)
-            while ins is None and sstart > 0:
-                sstart -= 1
-                ins = min(alignment.get(sstart, []), default=None)
-            if ins is None: ins = l if iend == l else -1
-            insertion[ins].extend(p[istart:iend])
-
-        def construct_xml():
-            nonlocal target, insertion, matched_target, tlen, rev_alignment, a
-            print(target, insertion, matched_target, sep='\n')
-            xml, included, tstart = '', False, -1
-            for t in range(tlen):
-                if not included and matched_target[t]:
-                    tstart, included = t, True
-                elif included and (not matched_target[t] or insertion.get(t) is not None):
-                        xml += '<xml translation='+' '.join(target[tstart:t])+'>x</xml>'
-                        included = False
-                if insertion.get(t) is not None: xml += ' '.join(insertion.pop(t))
-            if included: xml += '<xml translation='+' '.join(target[tstart:tlen])+'>x</xml>'
-            while len(insertion) > 0: xml += ' '.join(insertion.popitem()[1])
-            print(xml)
-            return xml
-
-        a = self.__best_match(p, S) if len(S) > 1 else S[0]
-        print(a.s)
-        for m in a.M: print(' '.join(a.s.split()[m.start:m.end]), m.pstart, m.pend, m.start, m.end)
-        segid, alignment, rev_alignment = a.M[0].segid, collections.defaultdict(list), collections.defaultdict(list)
-        for x, y in map(lambda p: tuple(map(int, p.split('-'))), self.__a[segid].split()):
-            alignment[x].append(y)
-            rev_alignment[y].append(x)
-        target, a.s = self.__e[segid].split(), a.s.split()
-        istart = sstart = 0
-        slen, tlen = len(a.s), len(target)
-        matched_target, insertion = [True] * tlen, collections.defaultdict(list)
-        print(alignment)
-        for m in a.M:
-            if m.pstart < istart: continue
-            mismatch(istart, m.pstart, sstart, m.start)
-            istart, sstart = m.pend, m.end
-        if istart < l or sstart < slen: mismatch(istart, l, sstart, slen)
-        return construct_xml()
-
-    def match(self, p):
-        p, d1, d2 = p.split(), collections.defaultdict(list), collections.defaultdict(list)
-        l = len(p)
+    def match(self):
+        d1, d2 = collections.defaultdict(list), collections.defaultdict(list)
         for i in range(l):
-            d1[p[i]].append(i)
-            if i < l-1: d2[' '.join(p[i:i+2])].append(i)
+            d1[line[i]].append(i)
+            if i < l-1: d2[' '.join(line[i:i+2])].append(i)
         self.__ceilingcost = math.ceil(self.__threshold * l)
         #print('ceil before:', self.__ceilingcost)
-        M = self.__find_matches(p, l)
+        M = self.__find_matches()
         #print('ceil after', self.__ceilingcost)
-        return self.__align(p, l, self.__find_segments(M, l, d1, d2))
+        S = self.__find_segments(M, d1, d2)
+        return self.__best_match(S) if len(S) > 1 else S[0]
 
-    def __find_segments(self, M, l, d1, d2):
+    def __find_segments(self, M, d1, d2):
         A, S = [], []
         for k, v in M.items():
             if len(v) == 0: continue
@@ -143,12 +93,12 @@ class EBMT:
         a.mincost = a.priority = m1.leftmin + m2.rightmin + a.internal
         return a
 
-    def __find_matches(self, p, l):
+    def __find_matches(self):
         M = collections.defaultdict(list)
         for start in range(l):
             self.__first_match, self.__last_match = 0, self.__sflen-1
             for end in range(start + 3, l+1):
-                N = self.__find_in_suffix_array(' '.join(p[start:end]), end-start)
+                N = self.__find_in_suffix_array(' '.join(line[start:end]), end-start)
                 if N is None: break
                 for m in N: M[m.segid] = self.__add_match(m, M[m.segid], start, end, l-end)
         return M
@@ -204,21 +154,98 @@ class EBMT:
             N.append(m)
         return N
 
-    def __best_match(self, p, S):
+    def __best_match(self, S):
         score, best = 1 / len(S[0].M), S[0]
         for a in S[1:]:
             fms = 1 / len(a.M)
             if fms > score: score, best = fms, a
-            elif fms == score: best = a if edit_dist(a.s,p) < edit_dist(best.s,p) else best
+            elif fms == score: best = a if edit_dist(a.s,line) < edit_dist(best.s,line) else best
         return best
 
+def align(item):
+
+    def mismatch(sstart, sentend):
+        nonlocal matched_target
+        for i in range(sstart, sentend):
+            for t in alignment.get(i, []): matched_target[t] = False
+
+    def merge_chunks():
+        nonlocal chunks, lenchunks
+        i = 0
+        while i < lenchunks-1:
+            if (chunks[i+1].pstart == chunks[i].pend or chunks[i+1].pstart == chunks[i].pstart) and (chunks[i+1].start == chunks[i].end or chunks[i+1].start == chunks[i].start):
+                chunks[i].pend, chunks[i].iend, chunks[i].end = chunks[i+1].pend, chunks[i+1].iend, chunks[i+1].end
+                chunks.remove(chunks[i+1])
+                lenchunks -= 1
+            else: i += 1
+
+    def grow_chunk(i, j):
+        nonlocal chunks, matched_target
+        if j is not None: matched_target[j] = False
+        for k in range(lenchunks):
+            sside = 'chunks[k].pstart -= 1; chunks[k].istart -= 1' if i == chunks[k].pstart-1 else 'chunks[k].pend += 1; chunks[k].iend += 1' if i == chunks[k].pend else None
+            if sside is None: continue
+            if j is None:
+                exec(sside)
+                return True
+            tside = 'chunks[k].start -= 1' if j == chunks[k].start-1 else 'chunks[k].end += 1' if i == chunks[k].end else None
+            if tside is None: continue
+            exec('{};{}'.format(sside, tside))
+            return True
+        return False
+
+    #print(item.s)
+    #for m in item.M: print(' '.join(item.s.split()[m.start:m.end]), m.pstart, m.pend, m.start, m.end)
+    segid, alignment = item.M[0].segid, collections.defaultdict(list)
+    for x, y in map(lambda p: tuple(map(int, p.split('-'))), a[segid].split()): alignment[x].append(y)
+    target, item.s = e[segid].split(), item.s.split()
+    istart = sstart = 0
+    slen, tlen, d = len(item.s), len(target), None
+    matched_target = [True] * tlen
+    #print(alignment)
+    for i in range(len(item.M)):
+        m = item.M[i]
+        if m.pstart < istart:
+            d = i
+            continue
+        mismatch(sstart, m.start)
+        istart, sstart = m.pend, m.end
+    if sstart < slen: mismatch(sstart, slen)
+    if d is not None: del item.M[d]
+    #print(matched_target)
+    chunks, lenchunks = [], 0
+    for m in item.M:
+        for i, k in zip(range(m.start, m.end), range(m.pstart, m.pend)):
+            al = alignment.get(i)
+            if al is not None:
+                for j in al:
+                    if matched_target[j] and not grow_chunk(i, j):
+                        chunk = _Match()
+                        chunk.pstart, chunk.pend, chunk.start, chunk.end, chunk.istart, chunk.iend = i, i+1, j, j+1, k, k+1
+                        chunks.append(chunk)
+                        lenchunks += 1
+            else: grow_chunk(i, None)
+    merge_chunks()
+    #for m in chunks: print(' '.join(target[m.start:m.end]), ' '.join(item.s[m.pstart:m.pend]), m.istart, m.iend, m.pstart, m.pend, m.start, m.end)
+    return chunks, target
+
+def construct_xml(chunks, target):
+    i, xml = 0, ''
+    for m in chunks:
+        xml += '{} <xml translation={} > {} </xml> '.format(' '.join(line[i:m.istart]), ' '.join(target[m.start:m.end]), ' '.join(line[m.istart:m.iend]))
+        i = m.iend
+    return xml + ' '.join(line[i:l])
+
 if __name__=="__main__":
+    dbdir, adir = os.environ['THESISDIR'] + '/data/corpus/bilingual/parallel/lc/', os.environ['THESISDIR'] + '/data/train/lowercased/model/aligned.grow-diag-final-and'
     print('Loading...', sep='', end='', flush=True)
-    eb = EBMT(os.environ['THESISDIR'] + '/data/corpus/bilingual/parallel/lc/', os.environ['THESISDIR'] + '/data/train/lowercased/model/aligned.grow-diag-final-and')
+    with open(dbdir+'IITB.en-hi.train.hi') as f, open(dbdir+'IITB.en-hi.train.en') as e, open(adir) as a: f, e, a = f.read(), e.read().splitlines(), a.read().splitlines()
+    bm = _BestMatch(dbdir)
     print('Done')
-    import timeit, gc
-    with open('/home/phoenix/Desktop/testsents.txt') as ip:
+    with open('{}/testsents.txt'.format(os.environ['HOME'])) as ip:
         i = 1
         for line in ip:
-            print('test sentence', i, 'took', timeit.Timer("eb.match('{}')".format(line.strip()), 'gc.enable()', globals=globals()).timeit(1), 'seconds.')
+            line = line.split()
+            l = len(line)
+            print(construct_xml(*align(bm.match())))
             i += 1

@@ -1,6 +1,6 @@
 #!/bin/env python3
 #Author: Saurabh Pathak
-'''graph visualizer for experiments'''
+'''graph visualizer for corpus'''
 from matplotlib import pyplot as pl
 from statistics import mean
 from os import environ
@@ -30,4 +30,4 @@ def figplot(prefix, output=environ['THESISDIR']+'/data/'):
     pl.show()
 
 if __name__=="__main__":
-    figplot(environ['THESISDIR']+'/data/corpus/bilingual/parallel/IITB.en-hi.true')
+    figplot(environ['THESISDIR']+'/data/corpus/bilingual/parallel/IITB.en-hi.train')

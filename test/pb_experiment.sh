@@ -26,11 +26,11 @@ helper() {
 }
 
 test_suite () {
+	helper 0 $1 $2
 	for dl in {6..12}
 	do helper $dl $1 $2
 	done
 	helper -1 $1 $2
-	helper 0 $1 $2
 }
 
 duration() {
@@ -45,10 +45,10 @@ duration() {
 file=$(change_absolute $1)
 ref_file=$(change_absolute $2)
 output_dir=$(change_absolute $3)
-test_dir=$(echo $file | grep -o '[^/]*$' | cut -d. -f1-2)
+test_dir=$(echo $file | grep -o '[^/]*$' | cut -d. -f1)
 if [ "$5" = "untuned" ]
 then ini="$THESISDIR/data/train/$4/model/pb/moses.ini"
-else ini="$THESISDIR/data/mert-work/pb/moses.ini"
+else ini="$THESISDIR/data/mert-work/pb/$4/moses.ini"
 fi
 mkdir -p $output_dir
 cd $output_dir

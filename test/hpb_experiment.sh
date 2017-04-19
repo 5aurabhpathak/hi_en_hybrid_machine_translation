@@ -45,20 +45,20 @@ duration() {
 file=$(change_absolute $1)
 ref_file=$(change_absolute $2)
 output_dir=$(change_absolute $3)
-test_dir=$(echo $file | grep -o '[^/]*$' | cut -d. -f1-2)
+test_dir=$(echo $file | grep -o '[^/]*$' | cut -d. -f1)
 mkdir -p $output_dir
 cd $output_dir
 mkdir -p hpb/$4/$test_dir
 cd hpb/$4/$test_dir
 if [ "$5" = "untuned" ]
 then ini="$THESISDIR/data/train/$4/model/hpb/moses.ini"
-else ini="$THESISDIR/data/mert-work/hpb/moses.ini"
+else ini="$THESISDIR/data/mert-work/hpb/$4/moses.ini"
 fi
 if [ ! -d "table" ]
 then
-	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl table $ini $file -Binarizer 'CreateOnDiskPt 1 1 4 100 2' -Hierarchical >& /dev/null
+	$SCRIPTS_ROOTDIR/training/filter-model-given-input.pl table $ini $file -Binarizer 'CreateOnDiskPt 1 1 4 100 2' -Hierarchical
 	mv table/moses.ini table/moses.$5.ini
-	rm table/phrase-table.0-0.1.1 info input.*
+	rm table/phrase-table.0-0.1.1 table/info table/input.*
 else $SCRIPTS_ROOTDIR/ems/support/substitute-filtered-tables.perl table/moses.* < $ini > table/moses.$5.ini
 fi
 echo Starting $4 tests on $(date)...
