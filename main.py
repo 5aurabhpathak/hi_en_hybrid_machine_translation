@@ -4,7 +4,7 @@
 #Usage: (main.py sourcefileneame) or just (main.py) for a text cli :)
 from subprocess import Popen, PIPE, DEVNULL
 from sys import argv, stderr
-import ebmt, rulebaseprior, xml_input, data, os
+import ebmt, rulebaseprior, xml_input, data, transliterate, os
 
 def make_chunkset(text, tags, l, verbose=True):
     if verbose: print('Applying rules...', sep='', end='', flush=True, file=stderr)
@@ -25,7 +25,9 @@ def translate_sent(text, p):
     p.stdin.write('{}\n'.format(xml))
     p.stdin.flush()
     print('Moses is translating...', flush=True, file=stderr)
-    print('Translated:', p.stdout.readline())
+    smt = p.stdout.readline()
+    print('Done\nTransliterating OOVs...', flush=True, file=stderr)
+    print('Translated:', transliterate.translit_sent('{}/oov'.format(run), smt))
 
 def translate_file(text):
     print('Tagging input...', sep='', end='', flush=True, file=stderr)
@@ -40,11 +42,13 @@ def translate_file(text):
             i += 1
     with open('{}/smt.out'.format(run), 'w') as smt:
         print('Done\nMoses is translating...', sep='', end='', flush=True, file=stderr)
-        p = Popen('moses -inputtype 0 -f {} -xml-input inclusive -mp -i {}/xml.out'.format(ini, run).split(), universal_newlines=True, stdout=smt, stderr=DEVNULL)
-        p.wait()
+        Popen('moses -inputtype 0 -output-unknowns {}/oov -f {} -xml-input inclusive -mp -i {}/xml.out'.format(run, ini, run).split(), universal_newlines=True, stdout=smt).wait()
         smt.flush()
+        smt.seek()
+        print('Done\nTransliterating OOVs...', flush=True, file=stderr)
+        transliterate.translit_file('{}/oov'.format(run), smt)
         if len(argv) == 3:
-            p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTSROOTDIR'], argv[2]).split(), universal_newlines=True, stdin=smt)
+            p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTSROOTDIR'], os.path.abspath(argv[2])).split(), universal_newlines=True, stdin=smt)
     print('Done\nCheck en.out in data/run. Bye!', flush=True, file=stderr)
 
 print('Loading example-base...', sep='', end='', flush=True, file=stderr)
@@ -52,12 +56,12 @@ data.load()
 print('Done\nLoading suffix arrays...', sep='', end='', flush=True, file=stderr)
 bm = ebmt._BestMatch(data.dbdir)
 print('Done', flush=True, file=stderr)
-run  = '{}/data/run'.format(os.environ['THESISDIR'])
+run  = data.run
 ini = '{}/moses-interactive.ini'.format(run)
 try: translate_file(os.path.abspath(argv[1]))
 except IndexError:
     print('Starting moses...', sep='', end='', flush=True, file=stderr)
-    p = Popen('moses -inputtype 0 -f {} -xml-input inclusive -mp'.format(ini).split(), universal_newlines=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    p = Popen('moses -inputtype 0 -output-unknowns {}/oov -f {} -xml-input inclusive -mp'.format(run, ini).split(), universal_newlines=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
     while 'input-output' not in p.stderr.readline(): pass
     print('Ready\nWelcome to the SILP Hindi to English Translator!', flush=True, file=stderr)
     while True:
