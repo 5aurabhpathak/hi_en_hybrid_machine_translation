@@ -1,6 +1,6 @@
 #!/bin/bash
 #Author: Saurabh Pathak
-#creates csv from experiments results
+#creates csv from experiments results and makes graphs
 cd $THESISDIR/data/results/
 
 function to_minutes {
@@ -36,6 +36,7 @@ do
 		for stack in $(seq 500 500 2000)
 		do csv
 		done
+		$THESISDIR/test/visualise_pbresults.py --input $bleu
 		popd >& /dev/null
 	done
 done
@@ -54,6 +55,7 @@ do
 			echo $z $(cat l$z.bleu | cut -d, -f1 | cut -d' ' -f3) $(to_minutes ${timearray[$i]}) >> $bleu
 			i=$(($i+1))
 		done
+		$THESISDIR/test/visualise_hpbresults.py --input $bleu
 		popd >& /dev/null
 	done
 done
