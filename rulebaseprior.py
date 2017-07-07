@@ -4,7 +4,7 @@
 import subprocess, os
 from data import run
 
-rulechunks, taggerdir = None, os.environ['THESISDIR'] + '/data/downloaded/hindi-part-of-speech-tagger'
+rulechunks = None
 
 class _RuleChunk:
     def __init__(self, begpos, length, trans):
@@ -53,23 +53,22 @@ def apply_rules(ip, tag, l):
     return rulechunks
 
 def tag_input(inp):
-    p = subprocess.Popen('./make.sh'.split(), stdout=subprocess.PIPE, stdin=subprocess.PIPE, cwd=taggerdir, universal_newlines=True)
-    out, err = p.communicate(inp)
+    p = subprocess.Popen('./make.sh {}'.format(inp).split(), stdout=subprocess.PIPE, universal_newlines=True)
+    out, err = p.communicate()
     d = []
     for line in out.splitlines():
-        if line == '<s>' or line == '</s>': continue
+        if 'EOL' in line: continue
         line = line.split('\t')
         d.append({x : y for x, y in zip(['POS', 'lemma', 'suffix', 'coarsePOS', 'gender', 'number', 'case'], line[1:])})
     return d
 
 def tag_input_file(f):
     D, d = [], []
-    p = subprocess.Popen('cat {} | ./make.sh'.format(f).split(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=taggerdir, universal_newlines=True)
+    p = subprocess.Popen('./make.sh {}'.format(f).split(), stdout=subprocess.PIPE, universal_newlines=True)
     out, err = p.communicate()
     with open('{}/tags.out'.format(run), 'w', encoding='utf-8') as tagop: tagop.write(out)
     for line in out.splitlines():
-        if line == '<s>': continue
-        elif line == '</s>':
+        if 'EOL' in line:
             D.append(d)
             d = []
             continue
