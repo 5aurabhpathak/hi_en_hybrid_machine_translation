@@ -96,7 +96,7 @@ class _BestMatch:
     def __find_matches(self):
         M = collections.defaultdict(list)
         for start in range(l):
-            self.__first_match, self.__last_match = 0, self.__sflen-1
+            self.__first_match = 0
             for end in range(start + 3, l+1):
                 N = self.__find_in_suffix_array(' '.join(line[start:end]), end-start)
                 if N is None: break
@@ -124,14 +124,14 @@ class _BestMatch:
 
     def __find_in_suffix_array(self, p, plen):
 
-        def binary_search(lo, hi=self.__sflen-1, *, first=True):
+        def binary_search(lo, hi=self.__sflen, *, first=True):
             '''to find first/last (as requested in parameter) occurence of string in text'''
-            while hi >= lo:
+            while hi > lo:
                 mid = (lo + hi) // 2
                 pos = self.__sf[mid]
                 k = ' '.join(self.__f[pos:pos+plen])
                 if k < p: lo = mid + 1
-                elif k > p: hi = mid - 1
+                elif k > p: hi = mid
                 elif first:
                     if mid == 0: return mid
                     prevpos = self.__sf[mid-1]
@@ -144,7 +144,7 @@ class _BestMatch:
                     lo = mid + 1
             raise KeyError
 
-        try: self.__first_match = binary_search(self.__first_match, self.__last_match)
+        try: self.__first_match = binary_search(self.__first_match)
         except KeyError: return
         N, self.__last_match = [], binary_search(self.__first_match, first=False)
         for i in range(self.__first_match, self.__last_match + 1):

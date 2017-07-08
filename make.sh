@@ -17,5 +17,5 @@ else IN="$1"
 fi
 
 cd $TAGGERDIR
-$TAGGER <( echo "$IN" | sed 's/$/EOL/g' | $TOKENIZER | sed -e 's/।/./g' |  $NORMALIZE ) | sed -e 's/\t\+/\t/g' | $LEMMATIZER | $TAG2VERT
+$TAGGER <( echo "$IN" | sed 's/$/ EOL/g' | $TOKENIZER | sed -e 's/।/./g' |  $NORMALIZE ) | sed -e 's/\t\+/\t/g' | $LEMMATIZER | $TAG2VERT
 exit 0

@@ -27,30 +27,35 @@ def translate_sent(text, p):
     print('Moses is translating...', flush=True, file=stderr)
     smt = p.stdout.readline()
     print('Done\nTransliterating OOVs...', flush=True, file=stderr)
-    print('Translated:', transliterate.translit_sent('{}/oov'.format(run), smt))
+    print('Translated:', transliterate.translit_sent(smt))
 
 def translate_file(text):
     print('Tagging input...', sep='', end='', flush=True, file=stderr)
     tags = rulebaseprior.tag_input_file(text)
-    print('Done\nRunning RBMT+EBMT...',sep='', end='', flush=True, file=stderr)
-    i = 0
+    print('Done\nHave patience. run \'tail-f data/run/xml.out\' if you dont. :)\nApplying rules followed by EBMT followed by recombination on each sentence...', flush=True, file=stderr)
+
     with open(text) as f, open('{}/xml.out'.format(run), 'w', encoding='utf-8') as xml:
-        for line in f:
+        for i, line in enumerate(f):
+            print('processing sentence:', i+1, end='\r', flush=True, file=stderr)
             line = line.split()
             l = len(line)
             xml.write('{}\n'.format(xml_input.construct(make_chunkset(line, tags[i], l, False), line, l)))
-            i += 1
-    with open('{}/smt.out'.format(run), 'w') as smt:
-        print('Done\nMoses is translating...', sep='', end='', flush=True, file=stderr)
-        Popen('moses -inputtype 0 -output-unknowns {}/oov -f {} -xml-input inclusive -mp -i {}/xml.out'.format(run, ini, run).split(), universal_newlines=True, stdout=smt).wait()
-        smt.flush()
-        smt.seek(0)
-        if os.stat(run + '/oov').st_size == 1: shutil.copy2(run + '/smt.out', run + '/en.out') #Due to some reason empty oov file produced by moses has a size of 1 byte
-        else:
-            print('Done\nTransliterating OOVs...', flush=True, file=stderr)
-            transliterate.translit_file('{}/oov'.format(run), smt)
-        if len(argv) == 3: p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTSROOTDIR'], os.path.abspath(argv[2])).split(), universal_newlines=True, stdin=smt)
-    print('Done\nCheck en.out in data/run. Bye!', flush=True, file=stderr)
+
+    with open('{}/smt.out'.format(run), 'w', encoding='utf-8') as smt:
+        print('Filtering rule table for faster translation (approx 10 minutes)...', end='', flush=True, file=stderr)
+        shutil.rmtree(run + '/filetable', ignore_errors=True)
+        Popen('{0}/training/filter-model-given-input.pl {1}/filetable {1}/moses.file.ini {2} -Binarizer "CreateOnDiskPt 1 1 4 0 2" -Hierarchical'.format(os.environ['SCRIPTS_ROOTDIR'], run, text), shell=True, stdout=DEVNULL, stderr=DEVNULL).wait()
+        print('Done\nHave patience. run \'tail-f data/run/smt.out\' if you dont. :)\nMoses is translating...', sep='', end='', flush=True, file=stderr)
+        Popen('moses -inputtype 0 -f {0}/filetable/moses.ini -xml-input inclusive -mp -i {0}/xml.out'.format(run).split(), universal_newlines=True, stdout=smt, stderr=DEVNULL).wait()
+
+    print('Done\nTransliterating OOVs...', sep='', end='', flush=True, file=stderr)
+    transliterate.translit_file('{}/smt.out'.format(run))
+
+    if len(argv) == 3:
+        with open('{}/en.out'.format(run)) as out:
+            p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTS_ROOTDIR'], os.path.abspath(argv[2])).split(), universal_newlines=True, stdin=out, stdout=PIPE, stderr=DEVNULL)
+            out, err = p.communicate()
+    print('Done\nBLEU score: {}\nCheck en.out in data/run. Bye!'.format(out.split()[2][:-1]), flush=True, file=stderr)
 
 print('Loading example-base...', sep='', end='', flush=True, file=stderr)
 data.load()
@@ -62,7 +67,7 @@ ini = '{}/moses.ini'.format(run)
 try: translate_file(os.path.abspath(argv[1]))
 except IndexError:
     print('Starting moses...', sep='', end='', flush=True, file=stderr)
-    p = Popen('moses -inputtype 0 -output-unknowns {}/oov -f {} -xml-input inclusive -mp'.format(run, ini).split(), universal_newlines=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+    p = Popen('moses -inputtype 0 -f {} -xml-input inclusive -mp'.format(ini).split(), universal_newlines=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
     while 'input-output' not in p.stderr.readline(): pass
     print('Ready\nWelcome to the SILP Hindi to English Translator!', flush=True, file=stderr)
     while True:

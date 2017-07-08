@@ -20,36 +20,78 @@ def apply_rules(ip, tag, l):
     for i, x in enumerate(ip):
         bound, lbound = i+1 < l, i > 0
         if x in {'रहता', 'रहती', 'रहा', 'रही'} and lbound and tag[i-1]['POS'] == 'VM':
-            if bound and ip[i+1] == 'हूँ': _RuleChunk(i, 2, 'have been')
+            if bound and ip[i+1] == 'हूँ':
+                if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 3, 'have not been')
+                else: _RuleChunk(i, 2, 'have been')
             elif x in {'रहता', 'रहती'} or (x in {'रहा', 'रही'} and lbound and tag[i-1]['suffix'] in {'ता', 'ती'}):
-                if bound and ip[i+1] == 'है': _RuleChunk(i, 2, 'has been')
-                elif bound and ip[i+1] in {'था', 'थी'}: _RuleChunk(i, 2, 'had been')
+                if bound and ip[i+1] == 'है':
+                    if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 3, 'has not been')
+                    else: _RuleChunk(i, 2, 'has been')
+                elif bound and ip[i+1] in {'था', 'थी'}:
+                    if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 3, 'had not been')
+                    else: _RuleChunk(i, 2, 'had been')
         elif x in {'रहते', 'रहतीं', 'रहे', 'रहीं'} and lbound and tag[i-1]['POS'] == 'VM':
             if x in {'रहते', 'रहतीं'} or (x in {'रहे', 'रहीं'} and lbound and tag[i-1]['suffix'] in {'ते', 'ती'}):
-                if bound and ip[i+1] == 'हैं': _RuleChunk(i, 2, 'have been')
-                elif bound and ip[i+1] in {'थे', 'थीं'}: _RuleChunk(i, 2, 'had been')
+                if bound and ip[i+1] == 'हैं':
+                    if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 3, 'have not been')
+                    else: _RuleChunk(i, 2, 'have been')
+                elif bound and ip[i+1] in {'थे', 'थीं'}:
+                    if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 3, 'had not been')
+                    else: _RuleChunk(i, 2, 'had been')
         elif x == 'चाहिए':
             if bound and ip[i+1] == 'था':
-                if lbound and ip[i-1] == 'होना': _RuleChunk(i, 3, 'should have been')
+                if lbound and ip[i-1] == 'होना':
+                    if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 4, 'should not have been')
+                    else: _RuleChunk(i-1, 3, 'should have been')
                 else: _RuleChunk(i, 2, 'should have')
-            elif lbound and tag[i-1]['POS'] == 'VM':
-                if ip[i-1] == 'होना': _RuleChunk(i, 2, 'should be')
-                else: _RuleChunk(i, 1, 'should')
-        elif x in {'सकता', 'सकती', 'सकते','सकूँगा', 'सकूँगी', 'सकेगा', 'सकेगी', 'सकेंगे', 'सकेंगी'}:
+            elif lbound and tag[i-1]['coarsePOS'] == 'v':
+                if ip[i-1] == 'होना':
+                    if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 3, 'should not be')
+                    else: _RuleChunk(i-1, 2, 'should be')
+                else:
+                    _RuleChunk(i, 1, 'should')
+                    if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 1, 'not')
+        elif x in {'सकता', 'सकती', 'सकते','सकूँगा', 'सकूँगी', 'सकेगा', 'सकेगी', 'सकेंगे', 'सकेंगी', 'सका', 'सके', 'सकी', 'सकीं'}:
             if x in {'सकता', 'सकती', 'सकते'}:
                 if bound and ip[i+1] in {'था', 'थी', 'थे'}:
-                    if lbound and ip[i-1] == 'हो': _RuleChunk(i, 3, 'could have been')
-                    else: _RuleChunk(i, 2, 'could have')
-                elif bound and ip[i+1] in {'हूँ', 'है', 'हैं'}: _RuleChunk(i, 2, 'can be')
-                elif bound and tag[i+1]['POS'] != 'VM': _RuleChunk(i, 1, 'could')
-            else: _RuleChunk(i, 1, 'can') 
-        elif x in {'रहूंगा', 'रहूंगी', 'रहेंगे'}: _RuleChunk(i, 2, 'will be')
-        elif x in {'होऊंगा', 'होऊंगी', 'होंगे', 'होंगी', 'होगा', 'होगी'}:
-            if lbound and tag[i-1]['POS'] == 'VM':
-                if ip[i-1] in {'रहा', 'रही', 'रहे', 'रही'}: _RuleChunk(i, 2, 'will have been')
-                elif ip[i-1] in {'चुका', 'चुकी', 'चुके'}: _RuleChunk(i, 2, 'will have')
-                elif tag[i-1]['suffix'] in {'ता', 'ते', 'ती'}: _RuleChunk(i, 1, 'will be')
+                    if lbound and ip[i-1] == 'हो':
+                        if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 4, 'could not have been')
+                        else: _RuleChunk(i-1, 3, 'could have been')
+                    else:
+                        if i > 1 and ip[i-2] == 'नही' and tag[i-1]['POS'] == 'VM':
+                            _RuleChunk(i-2, 1, 'not have')
+                            _RuleChunk(i, 2, 'could')
+                        else: _RuleChunk(i, 2, 'could have')
+                elif bound and ip[i+1] in {'हूँ', 'है', 'हैं'}:
+                    if lbound and ip[i-1] == 'हो':
+                        if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 4, 'can not be')
+                        else: _RuleChunk(i-1, 3, 'can be')
+                    else:
+                        _RuleChunk(i, 2, 'can')
+                        if i > 1 and ip[i-2] == 'नही' and tag[i-1]['POS'] == 'VM': _RuleChunk(i-2, 1, 'not')
+                elif not bound or tag[i+1]['coarsePOS'] != 'v': _RuleChunk(i, 1, 'could')
+            elif lbound and tag[i-1]['coarsePOS'] == 'v': 
+                    _RuleChunk(i, 1, 'could')
+                    if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 1, 'not')
+        elif x in {'रहूंगा', 'रहूंगी', 'रहेंगे'}:
+            if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 2, 'will not be')
             else: _RuleChunk(i, 1, 'will be')
+        elif x in {'होऊंगा', 'होऊंगी', 'होंगे', 'होंगी', 'होगा', 'होगी'}:
+            if lbound and tag[i-1]['coarsePOS'] == 'v':
+                if ip[i-1] in {'रहा', 'रही', 'रहे', 'रही'}:
+                    if i > 1 and ip[i-2] == 'नही': _RuleChunk(i-2, 3, 'will not have been')
+                    else: _RuleChunk(i-1, 2, 'will have been')
+                elif ip[i-1] in {'चुका', 'चुकी', 'चुके'}:
+                    if i > 2 and ip[i-3] == 'नही' and tag[i-2]['POS'] == 'VM' : _RuleChunk(i-3, 1, 'not')
+                    _RuleChunk(i-1, 2, 'will have')
+                elif tag[i-1]['suffix'] in {'ता', 'ते', 'ती'}:
+                    if i > 1 and ip[i-2] == 'नही':
+                        _RuleChunk(i-2, 1, 'not be')
+                        _RuleChunk(i, 1, 'will')
+                    else: _RuleChunk(i, 1, 'will be')
+            else:
+                if lbound and ip[i-1] == 'नही': _RuleChunk(i-1, 2, 'will not be')
+                else: _RuleChunk(i, 1, 'will be')
     return rulechunks
 
 def tag_input(inp):

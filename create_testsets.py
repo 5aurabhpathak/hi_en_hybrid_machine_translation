@@ -5,14 +5,15 @@ import os
 
 workingdir = os.environ['THESISDIR'] + '/data/corpus/bilingual'
 testsetdir = workingdir + '/additonaltestsets'
+os.makedirs(testsetdir, exist_ok=True)
 
-with open('{}/parallel/selected_out/IITB.en-hi.hi'.format(workingdir)) as hi, open('{}/parallel/selected_out/IITB.en-hi.hi'.format(workingdir)) as en, \
-        open('{}/s1.hi', 'w', encoding='utf-8') as s1hi, open('{}/s1.en', 'w', encoding='utf-8') as s1en, \
-        open('{}/s2.hi', 'w', encoding='utf-8') as s2hi, open('{}/s2.en', 'w', encoding='utf-8') as s2en, \
-        open('{}/s3.hi', 'w', encoding='utf-8') as s3hi, open('{}/s3.en', 'w', encoding='utf-8') as s3en, \
-        open('{}/s4.hi', 'w', encoding='utf-8') as s4hi, open('{}/s4.en', 'w', encoding='utf-8') as s4en, \
-        open('{}/s5.hi', 'w', encoding='utf-8') as s5hi, open('{}/s5.en', 'w', encoding='utf-8') as s5en, \
-        open('{}/s6.hi', 'w', encoding='utf-8') as s6hi, open('{}/s6.en', 'w', encoding='utf-8') as s6en:
+with open('{}/parallel/selected_out/IITB.en-hi.hi'.format(workingdir)) as hi, open('{}/parallel/selected_out/IITB.en-hi.en'.format(workingdir)) as en, \
+        open('{}/s1.hi'.format(testsetdir), 'w', encoding='utf-8') as s1hi, open('{}/s1.en'.format(testsetdir), 'w', encoding='utf-8') as s1en, \
+        open('{}/s2.hi'.format(testsetdir), 'w', encoding='utf-8') as s2hi, open('{}/s2.en'.format(testsetdir), 'w', encoding='utf-8') as s2en, \
+        open('{}/s3.hi'.format(testsetdir), 'w', encoding='utf-8') as s3hi, open('{}/s3.en'.format(testsetdir), 'w', encoding='utf-8') as s3en, \
+        open('{}/s4.hi'.format(testsetdir), 'w', encoding='utf-8') as s4hi, open('{}/s4.en'.format(testsetdir), 'w', encoding='utf-8') as s4en, \
+        open('{}/s5.hi'.format(testsetdir), 'w', encoding='utf-8') as s5hi, open('{}/s5.en'.format(testsetdir), 'w', encoding='utf-8') as s5en, \
+        open('{}/s6.hi'.format(testsetdir), 'w', encoding='utf-8') as s6hi, open('{}/s6.en'.format(testsetdir), 'w', encoding='utf-8') as s6en:
             for hiline, enline in zip(hi, en):
                 i = len(hiline.split())
                 if 0 < i <= 5:

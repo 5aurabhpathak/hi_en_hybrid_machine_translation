@@ -1,9 +1,11 @@
 #!/bin/env/python3
 #Author: Saurabh Pathak
 import data
+from sys import stderr
 
-def construct(chunkset, line, l):
+def construct(chunkset, line, l, verbose=False):
     #knapsack problem instance
+    if verbose: print('Recombining segments...', sep='', end='', flush=True, file=stderr)
     dp = [[None]*(l+1) for i in range(l+1)]
 
     def knapsack(istart, iend):
@@ -21,5 +23,6 @@ def construct(chunkset, line, l):
         dp[istart][iend] = maxcost, span
         return maxcost, span
 
-    return knapsack(0, l)[1]
-
+    xml = knapsack(0, l)[1]
+    if verbose: print('Done', flush=True, file=stderr)
+    return xml
