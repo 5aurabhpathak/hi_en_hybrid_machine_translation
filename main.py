@@ -50,12 +50,14 @@ def translate_file(text):
 
     print('Done\nTransliterating OOVs...', sep='', end='', flush=True, file=stderr)
     transliterate.translit_file('{}/smt.out'.format(run))
+    print('Done', flush=True, file=stderr)
 
     if len(argv) == 3:
         with open('{}/en.out'.format(run)) as out:
             p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTS_ROOTDIR'], os.path.abspath(argv[2])).split(), universal_newlines=True, stdin=out, stdout=PIPE, stderr=DEVNULL)
             out, err = p.communicate()
-    print('Done\nBLEU score: {}\nCheck en.out in data/run. Bye!'.format(out.split()[2][:-1]), flush=True, file=stderr)
+        print('BLEU score: {}'.format(out.split()[2][:-1]), flush=True, file=stderr)
+    print('Check en.out in data/run. Bye!'.format(out.split()[2][:-1]), flush=True, file=stderr)
 
 print('Loading example-base...', sep='', end='', flush=True, file=stderr)
 data.load()
