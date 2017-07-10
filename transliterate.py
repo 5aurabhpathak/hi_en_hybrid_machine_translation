@@ -4,9 +4,12 @@
 from subprocess import Popen, DEVNULL
 import os, data, collections
 
+j = 0
+
 def isHindi(word): return all(2304 <= ord(c) <= 2431 for c in word)
 
 def translit_file(smt):
+    if data.infofile is not None: global j
     d = collections.defaultdict(list)
     with open(smt) as oov, open('{}/translit.in'.format(data.run), 'w', encoding='utf-8') as inp:
         for i, line in enumerate(oov):
@@ -14,12 +17,13 @@ def translit_file(smt):
             for word in words:
                 if isHindi(word):
                     d[i].append(word)
+                    if data.infofile is not None: j += 1
                     inp.write(' '.join(list(word))+'\n')
 
     with open('{}/translit.out'.format(data.run), 'w', encoding='utf-8') as out:
         Popen('moses -f {}/data/train/lowercased/model/hpb/transliterate/tuning/moses.tuned.ini -i {}/translit.in'.format(os.environ['THESISDIR'], data.run).split(), stdout=out, universal_newlines=True, stderr=DEVNULL).wait()
 
-    with open('{}/en.out'.format(data.run), 'w') as enout, open('{}/translit.out'.format(data.run)) as out, open(smt) as smtout:
+    with open('{}/transliterated.out'.format(data.run), 'w') as enout, open('{}/translit.out'.format(data.run)) as out, open(smt) as smtout:
         key, j = list(d.keys()), 0
         key.sort()
         keylen = len(key)

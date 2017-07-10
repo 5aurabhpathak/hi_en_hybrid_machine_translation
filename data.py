@@ -3,7 +3,7 @@
 #Necessary data
 import sys, os
 
-dbdir, f, e, al, run = '', '', '', '', os.environ['THESISDIR'] + '/data/run'
+dbdir, f, e, al, run, infofile = '', '', '', '', os.environ['THESISDIR'] + '/data/run', None
 
 class _Match: pass # <-- containers for attributes. Could use a dict instead but that means more syntax
 class _Item: pass

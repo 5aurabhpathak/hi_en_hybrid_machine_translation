@@ -7,10 +7,16 @@ import pickle, math, collections, sys, data
 
 line, l = [], 0
 
+class ExactMatchException(Exception):
+
+    def __init__(self, trans):
+        super(ExactMatchException, self).__init__(self)
+        self.info = trans
+
 class _BestMatch:
     '''Handler class for EBMT - translation unit is a sentence.'''
 
-    def __init__(self, dbdir, thresh=1.5, mx=20):
+    def __init__(self, dbdir, thresh=0.4, mx=5):
         self.__threshold, self.__mx = thresh, mx
         with open(dbdir+'suffixarray.data', 'rb') as sf, open(dbdir+'ebmt.data', 'rb') as sd: self.__sf, self.__sd = pickle.load(sf), pickle.load(sd)
         self.__sflen, self.__f, self.__fl = len(self.__sf), data.f.split(), data.f.splitlines()
@@ -26,7 +32,7 @@ class _BestMatch:
         #print('ceil after', self.__ceilingcost, file=sys.stderr)
         S = self.__find_segments(M, d1, d2)
         #for s in S: print(s.s)
-        return self.__best_match(S) if len(S) > self.__mx else S
+        return self.__best_match(S) if len(S) > self.__mx else self.__score(S) if len(S) != 0 else S
 
     def __find_segments(self, M, d1, d2):
         A, S = [], []
@@ -154,10 +160,22 @@ class _BestMatch:
             m.remain = m.length - m.end
             N.append(m)
         return N
+        
+    def __calc_FMS(self, x):
+        x.fms = round(1  - edit_dist(x.s.split(),line) / max(l, len(x.s.split())), 4)
+        return x.fms
 
-    def __best_match(self, S):
-        S.sort(key=lambda x: 1  - edit_dist(x.s,line) / max(l, len(x.s.split())), reverse=True)
-        return S[:self.__mx]
+    def __best_match(self, S): #finds exact match. Main must catch the exact match exception.
+        S.sort(key=self.__calc_FMS, reverse=True)
+        return self.__score(S[:self.__mx])
+
+    def __score(self, S):
+        if not hasattr(S[0], 'fms'):
+            for s in S: self.__calc_FMS(s)
+        if S[0].fms == 1: raise ExactMatchException(data.e[S[0].M[0].segid])
+        #s = sum(x.fms for x in S)
+        #for r in S: r.fms = round(r.fms/s, 4)
+        return S
 
 def align(item):
 
@@ -219,7 +237,7 @@ def align(item):
                 for j in al:
                     if matched_target[j] and not grow_chunk(i, j) and not same:
                         chunk = data._Match()
-                        chunk.segid, chunk.pstart, chunk.pend, chunk.start, chunk.end, chunk.istart, chunk.iend = segid, i, i+1, j, j+1, k, k+1
+                        chunk.segid, chunk.fms, chunk.pstart, chunk.pend, chunk.start, chunk.end, chunk.istart, chunk.iend = segid, item.fms, i, i+1, j, j+1, k, k+1
                         chunks.append(chunk)
                         lenchunks += 1
                     same = True

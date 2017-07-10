@@ -4,8 +4,17 @@ import data
 from sys import stderr
 
 def construct(chunkset, line, l, verbose=False):
-    #knapsack problem instance
     if verbose: print('Recombining segments...', sep='', end='', flush=True, file=stderr)
+    #Avoiding malformed xml
+    temp = []
+    for chunk in chunkset:
+        if isinstance(chunk, data._Match):
+            chunk.trans = ' '.join(data.e[chunk.segid].split()[chunk.start:chunk.end]).strip('"<>/')
+            if len(chunk.trans) == 0: continue
+        temp.append(chunk)
+    chunkset = temp
+
+    #knapsack problem instance
     dp = [[None]*(l+1) for i in range(l+1)]
 
     def knapsack(istart, iend):
@@ -19,7 +28,7 @@ def construct(chunkset, line, l, verbose=False):
                 cost = leftcost + (chunk.iend-chunk.istart)**2  + rightcost
                 if cost > maxcost:
                     maxcost = cost
-                    span = leftspan + '<xml translation="{}" prob=0.6>{}</xml>'.format(' '.join(data.e[chunk.segid].split()[chunk.start:chunk.end]) if isinstance(chunk, data._Match) else chunk.trans, ' '.join(line[chunk.istart:chunk.iend]))  + rightspan
+                    span = leftspan + '<xml translation="{}" prob="{}">{}</xml>'.format(chunk.trans, chunk.fms, ' '.join(line[chunk.istart:chunk.iend]))  + rightspan
         dp[istart][iend] = maxcost, span
         return maxcost, span
 
