@@ -3,13 +3,13 @@
 #Prior rule-base
 import subprocess, os, data
 
-rulechunks, j = None, 0
+rulechunks, j, wall = None, 0, None
 
 class _RuleChunk:
     def __init__(self, begpos, length, trans):
         global j
         rulechunks.append(self)
-        self.istart, self.iend, self.trans, self.fms = begpos, begpos + length, trans, 0.8
+        self.istart, self.iend, self.trans, self.fms = begpos, begpos + length, trans, 0.5
         if data.infofile is not None: j += 1
 
 def apply_rules(ip, tag, l):
@@ -54,7 +54,7 @@ def apply_rules(ip, tag, l):
                 elif not bound or tag[i+1]['coarsePOS'] != 'v':
                     _RuleChunk(i, 1, 'could')
             elif lbound and tag[i-1]['coarsePOS'] == 'v': _RuleChunk(i, 1, 'could')
-        elif x in {'रहूंगा', 'रहूंगी', 'रहेंगे'}: _RuleChunk(i, 1, 'will be') #Future Continuous
+        elif x in {'रहूंगा', 'रहूंगी', 'रहेंगे'} and lbound and tag[i-1]['coarsePOS'] == 'v': _RuleChunk(i, 1, 'will be') #Future Continuous
         elif x in {'होऊंगा', 'होऊंगी', 'होंगे', 'होंगी', 'होगा', 'होगी'}:
             if lbound and tag[i-1]['coarsePOS'] == 'v':
                 if ip[i-1] in {'रहा', 'रही', 'रहे', 'रही', 'रहता', 'रहती', 'रहते'} and i > 1 and tag[i-2]['POS'] == 'VM': _RuleChunk(i-1, 2, 'will have been') #Future Perfect Continuous 
@@ -64,14 +64,25 @@ def apply_rules(ip, tag, l):
         i += 1
     return rulechunks
 
+def add_walls(istart, iend, tags, l, line):#reordering around conjunctions
+    global j, wall
+    s = ''
+    for t in range(istart, iend):
+        if (tags[t]['POS'] == 'CC' or tags[t]['lemma'] == 'जो') and t not in {0, l-1} and tags[t-1]['coarsePOS'] == 'v':
+            s = ' '.join([s, line[t], '<wall />'])
+            wall = True
+            j += 1
+        else: s = ' '.join([s, line[t]])
+    return s
+
 def tag_input(inp):
-    p = subprocess.Popen('{}/make.sh {}'.format(os.environ['THESISDIR'], inp).split(), stdout=subprocess.PIPE, universal_newlines=True)
+    p = subprocess.Popen(['{}/make.sh'.format(os.environ['THESISDIR']), '{}'.format(inp)], stdout=subprocess.PIPE, universal_newlines=True)
     out, err = p.communicate()
     d = []
     for line in out.splitlines():
         if 'EOL' in line: continue
         line = line.split('\t')
-        d.append({x : y for x, y in zip(['POS', 'lemma', 'suffix', 'coarsePOS', 'gender', 'number', 'case'], line[1:])})
+        d.append({x : y for x, y in zip(['lemma', 'POS', 'suffix', 'coarsePOS', 'gender', 'number', 'case'], line[1:])})
     return d
 
 def tag_input_file(f):
@@ -85,5 +96,5 @@ def tag_input_file(f):
             d = []
             continue
         line = line.split('\t')
-        d.append({x : y for x, y in zip(['POS', 'lemma', 'suffix', 'coarsePOS', 'gender', 'number', 'case'], line[1:])})
+        d.append({x : y for x, y in zip(['lemma', 'POS', 'suffix', 'coarsePOS', 'gender', 'number', 'case'], line[1:])})
     return D

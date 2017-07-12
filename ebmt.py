@@ -16,7 +16,7 @@ class ExactMatchException(Exception):
 class _BestMatch:
     '''Handler class for EBMT - translation unit is a sentence.'''
 
-    def __init__(self, dbdir, thresh=0.4, mx=5):
+    def __init__(self, dbdir, thresh=0.3, mx=5):
         self.__threshold, self.__mx = thresh, mx
         with open(dbdir+'suffixarray.data', 'rb') as sf, open(dbdir+'ebmt.data', 'rb') as sd: self.__sf, self.__sd = pickle.load(sf), pickle.load(sd)
         self.__sflen, self.__f, self.__fl = len(self.__sf), data.f.split(), data.f.splitlines()
@@ -40,16 +40,16 @@ class _BestMatch:
             if len(v) == 0: continue
             a = data._Item()
             a.M, a.s = v, self.__fl[k]
-            a.sumlength = sum([m.length for m in v])
+            a.sumlength = sum([m.pend-m.pstart for m in v])
             a.priority = - a.sumlength
             A.append(a)
 
         while len(A) > 0:
             a = A.pop()
-            if a.M[0].length - l > self.__ceilingcost or max(a.M[0].length, l) - a.sumlength > self.__ceilingcost: continue
-            #print('sentence under question', a.M[0].segid, a.s, file=sys.stderr)
             t = a.s.split()
             u = len(t)
+            if abs(u - l) > self.__ceilingcost or max(u, l) - a.sumlength > self.__ceilingcost: continue
+            #print('sentence under question', a.M[0].segid, a.s, file=sys.stderr)
             #print('before', len(a.M), file=sys.stderr)
             #for m in a.M: print(' '.join(a.s.split()[m.start:m.end]), file=sys.stderr)
             for i in range(u):
@@ -93,7 +93,7 @@ class _BestMatch:
         return cost
 
     def __combinable(self, m1, m2):
-        if m1.end >= m2.start or m1.pend >= m2.pstart: return
+        if m1.end > m2.start or m1.pend > m2.pstart: return
         a = data._Item()
         a.m1, a.m2, a.internal = m1, m2, max(m2.start - m1.end - 1, m2.pstart - m1.pend - 1)
         a.mincost = a.priority = m1.leftmin + m2.rightmin + a.internal
@@ -185,18 +185,54 @@ def align(item):
             for t in alignment.get(i, []): matched_target[t] = False
 
     def merge_chunks():
+
+        def merge():
+            nonlocal chunks, lenchunks
+            i = 0
+            while i < lenchunks - 1:
+                j = i + 1
+                while j < lenchunks:
+                    c1, c2 = chunks[i], chunks[j]
+                    c1len = c1.end - c1.start
+                    c1ilen = c1.iend - c1.istart
+                    c2len = c2.end - c2.start
+                    c2ilen = c2.iend - c2.istart
+                    minilen = min(c1.istart, c2.istart)
+                    minlen = min(c1.start, c2.start)
+                    maxlen = max(c1.end, c2.end)
+                    maxilen = max(c1.iend, c2.iend)
+                    interilen = maxilen - minilen
+                    interlen = maxlen - minlen
+                    if interilen <= c1ilen + c2ilen and interlen <= c1len + c2len:
+                        c1.istart = minilen
+                        c1.start = minlen
+                        c1.iend = maxilen
+                        c1.end = maxlen
+                        chunks.remove(c2)
+                        lenchunks -= 1
+                    else: j += 1
+                i += 1
+
         nonlocal chunks, lenchunks
+        oldlenchunks = lenchunks+1
+        while oldlenchunks > lenchunks: 
+            oldlenchunks = lenchunks
+            merge()
+
         i = 0
-        while i < lenchunks-1:
-            if (chunks[i+1].pstart == chunks[i].pend or chunks[i+1].pstart == chunks[i].pstart) and (chunks[i+1].start == chunks[i].end or chunks[i+1].start == chunks[i].start):
-                chunks[i].pend, chunks[i].iend, chunks[i].end = chunks[i+1].pend, chunks[i+1].iend, chunks[i+1].end
-                chunks.remove(chunks[i+1])
+        while i < lenchunks - 1:
+            c1, c2 = chunks[i], chunks[i+1]
+            if c1.istart <= c2.istart < c1.iend and c1.istart < c2.iend <= c1.iend:
+                chunks.remove(c2)
+                lenchunks -= 1
+            elif c2.istart <= c1.istart < c2.iend and c2.istart < c1.iend <= c1.iend:
+                chunks.remove(c1)
                 lenchunks -= 1
             else: i += 1
 
     def grow_chunk(i, j):
         nonlocal chunks, matched_target
-        if j is not None: matched_target[j] = False
+        #if j is not None: matched_target[j] = False
         for k in range(lenchunks):
             sside = 'chunks[k].pstart -= 1; chunks[k].istart -= 1' if i == chunks[k].pstart-1 else 'chunks[k].pend += 1; chunks[k].iend += 1' if i == chunks[k].pend else None
             if sside is None: continue
@@ -235,13 +271,13 @@ def align(item):
             if al is not None:
                 same = False
                 for j in al:
-                    if matched_target[j] and not grow_chunk(i, j) and not same:
+                    if matched_target[j]:# and not grow_chunk(i, j) and not same:
                         chunk = data._Match()
                         chunk.segid, chunk.fms, chunk.pstart, chunk.pend, chunk.start, chunk.end, chunk.istart, chunk.iend = segid, item.fms, i, i+1, j, j+1, k, k+1
                         chunks.append(chunk)
                         lenchunks += 1
                     same = True
-            else: grow_chunk(i, None)
+            #else: grow_chunk(i, None)
     merge_chunks()
     #for m in chunks: print(' '.join(target[m.start:m.end]), ' '.join(item.s[m.pstart:m.pend]), m.istart, m.iend, m.pstart, m.pend, m.start, m.end, file=sys.stderr)
     return chunks

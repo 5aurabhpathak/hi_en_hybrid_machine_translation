@@ -8,13 +8,15 @@ def edit_dist(s, i):
                 m stands for a matched word.
 
                 >>> edit_dist('फिर भी बहुत से राज्य और शहर खुद इस दिशा में आगे बढ़ रहे हैं .', 'न्यू यॉर्क शहर भी इस दिशा में आगे बढ़ रहा है .')
-                25
+                9
                 >>> edit_dist('दीपावली को देखते हुए मिठाई की मांग बढ़ जाती है .', 'इसे देखते हुए घटिया व नकली मावे की बिक्री बढ़ जाती है .')
-                29
+                7
                 >>> edit_dist('उन्होंने क्या किया है .', 'हमने क्या किया है .')
-                5
+                1
 
             '''
+            #uncomment prior to test
+            #i, s = i.split(), s.split()
             i_len, s_len = len(i), len(s)
             dp = [[0 for k in range(i_len+1)] for j in range(s_len+1)]
             for j in range(1, s_len+1): dp[j][0] = j

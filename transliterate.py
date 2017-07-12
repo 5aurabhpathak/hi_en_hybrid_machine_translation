@@ -43,7 +43,7 @@ def translit_sent(outstr):
                 inp.write(' '.join(list(word))+'\n')
 
     with open('{}/translit.out'.format(data.run), 'w', encoding='utf-8') as out:
-        Popen('moses -f {}/data/train/lowercased/model/hpb/transliterate/tuning/moses.tuned.ini -i {}/translit.in'.format(os.environ['THESISDIR'], data.run).split(), stdout=out, universal_newlines=True).wait()
+        Popen('moses -f {}/data/train/lowercased/model/hpb/transliterate/tuning/moses.tuned.ini -i {}/translit.in'.format(os.environ['THESISDIR'], data.run).split(), stdout=out, universal_newlines=True, stderr=DEVNULL).wait()
 
     with open('{}/translit.out'.format(data.run)) as out:
         for word, t in zip(d, out): outstr = outstr.replace(word, ''.join(t.split()), 1)
