@@ -7,7 +7,7 @@ from sys import argv, stderr
 import ebmt, rulebaseprior, xml_input, data, transliterate, os, shutil
 
 def filter_rules(text):
-    return #uncomment to diable filtering of rule-table
+    return #uncomment to disable filtering of rule-table
     print('Filtering rule table for faster translation (approx 10 minutes)\nThis will only happen if the file is being decoded for the first time...', end='', flush=True, file=stderr)
     shutil.rmtree(run + '/filetable', ignore_errors=True)
     #uncomment for hierarchical model
@@ -19,12 +19,12 @@ def filter_rules(text):
 
 def make_chunkset(text, tags, l, verbose=True):
     if verbose: print('Applying rules...', sep='', end='', flush=True, file=stderr)
-    #chunkset = rulebaseprior.apply_rules(text, tags, l)
-    chunkset = [] #uncomment this to disable rule base
+    chunkset = rulebaseprior.apply_rules(text, tags, l)
+    #chunkset = [] #uncomment this to disable rule base
     if verbose: print('Done\nEBMT is running...', sep='', end='', flush=True, file=stderr)
     #Comment following two lines to disable EBMT
-    #try: chunkset.extend(ebmt.run(text, bm, l))
-    #except ebmt.ExactMatchException as e: return e.info
+    try: chunkset.extend(ebmt.run(text, bm, l))
+    except ebmt.ExactMatchException as e: return e.info
     if verbose: print('Done', flush=True, file=stderr)
     return chunkset
 
@@ -84,7 +84,7 @@ def translate_file(text): #file handler.
     else: filter_rules(text)
 
     print('Have patience. run \'tail-f data/run/smt.out\' if you dont. :)\nMoses is translating...', sep='', end='', flush=True, file=stderr)
-    with open('{}/smtsplit.out'.format(run), 'w', encoding='utf-8') as smt: Popen('moses -f {0}/filetable/moses.ini -xml-input inclusive -mp -i {0}/xml.out'.format(run).split(), universal_newlines=True, stdout=smt).communicate()
+    with open('{}/smtsplit.out'.format(run), 'w', encoding='utf-8') as smt: Popen('moses -f {0}/filetable/moses.ini -xml-input inclusive -i {0}/xml.out'.format(run).split(), universal_newlines=True, stdout=smt).communicate()
 
     if splen > 0:
         print('Done\nMerging split points...', sep='', end='', flush=True, file=stderr)
@@ -133,13 +133,13 @@ def translate_file(text): #file handler.
         assert len(exact) == 0
     else: shutil.copy2('{}/transliterated.out'.format(run), '{}/en.out'.format(run))
 
-    if len(argv) == 3:
+    if ref is not None:
         with open('{}/en.out'.format(run)) as out:
-            p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTS_ROOTDIR'], os.path.abspath(argv[2])).split(), universal_newlines=True, stdin=out, stdout=PIPE, stderr=DEVNULL)
+            p = Popen('{}/generic/multi-bleu.perl {}'.format(os.environ['SCRIPTS_ROOTDIR'], ref).split(), universal_newlines=True, stdin=out, stdout=PIPE, stderr=DEVNULL)
             out, err = p.communicate()
             bleu = out.split()[2][:-1]
         print('BLEU score: {}'.format(bleu), flush=True, file=stderr)
-        p = Popen('{}/meteor.sh {} {}'.format(os.environ['THESISDIR'], '{}/en.out'.format(run), os.path.abspath(argv[2])).split(), universal_newlines=True, stdout=PIPE)
+        p = Popen('{}/meteor.sh {} {}'.format(os.environ['THESISDIR'], '{}/en.out'.format(run), ref).split(), universal_newlines=True, stdout=PIPE)
         out, err = p.communicate()
         meteor = round(float(out)*100, 2)
         print('METEOR score: {}'.format(meteor), flush=True, file=stderr)
@@ -147,23 +147,31 @@ def translate_file(text): #file handler.
     print('Check en.out in data/run. Bye!', flush=True, file=stderr)
     data.infofile.close()
 
-print('Loading example-base...', sep='', end='', flush=True, file=stderr)
-data.load()
-print('Done\nLoading suffix arrays...', sep='', end='', flush=True, file=stderr)
-bm = ebmt._BestMatch(data.dbdir, thresh=0.4, mx=5)
-print('Done', flush=True, file=stderr)
-run  = data.run
-ini, exact, sp = '{}/moses.ini'.format(run), {}, {}
-try: translate_file(os.path.abspath(argv[1]))
-except IndexError:
-    print('Starting moses...', sep='', end='', flush=True, file=stderr)
-    p = Popen('moses -inputtype 0 -f {} -xml-input include -mp'.format(ini).split(), universal_newlines=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
-    while 'input-output' not in p.stderr.readline(): pass
-    print('Ready\nWelcome to the SILP Hindi to English Translator!', flush=True, file=stderr)
-    while True:
-        try:
-            text = input('Enter one Hindi sentence or ctrl+d to exit:\n')
-            translate_sent(text, p)
-        except EOFError:
-            print('Bye!', file=stderr)
-            exit(0)
+def load_data():
+    global bm, run, ini, exact, sp
+    print('Loading example-base...', sep='', end='', flush=True, file=stderr)
+    data.load()
+    print('Done\nLoading suffix arrays...', sep='', end='', flush=True, file=stderr)
+    bm = ebmt._BestMatch(data.dbdir, thresh=0.4, mx=5)
+    print('Done', flush=True, file=stderr)
+    run  = data.run
+    ini, exact, sp = '{}/moses.ini'.format(run), {}, {}
+
+bm, run, ini, exact, sp, ref = None, None, None, None, None, None
+if __name__ == '__main__':
+    load_data()
+    try:
+        if len(argv) == 3: ref = os.path.abspath(argv[2])
+        translate_file(os.path.abspath(argv[1]))
+    except IndexError:
+        print('Starting moses...', sep='', end='', flush=True, file=stderr)
+        p = Popen('moses -inputtype 0 -f {} -xml-input include'.format(ini).split(), universal_newlines=True, stdout=PIPE, stdin=PIPE, stderr=PIPE)
+        while 'input-output' not in p.stderr.readline(): pass
+        print('Ready\nWelcome to the SILP Hindi to English Translator!', flush=True, file=stderr)
+        while True:
+            try:
+                text = input('Enter one Hindi sentence or ctrl+d to exit:\n')
+                translate_sent(text, p)
+            except EOFError:
+                print('Bye!', file=stderr)
+                exit(0)

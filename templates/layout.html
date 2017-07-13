@@ -1,0 +1,17 @@
+<!doctype html>
+<head>
+	<meta charset="UTF-8">
+	<title>SILP Lab Hindi to English Translator</title>
+</head>
+{% block body %}
+<h2>Welcome to the SILP Hindi to English Translator</h2>
+{% with messages = get_flashed_messages() %}
+	{% if messages %}
+		<ul class=flashes>
+		{% for message in messages %}
+			<li>{{ message }}</li>
+		{% endfor %}
+		</ul>
+	{% endif %}
+{% endwith %}
+{% endblock %}

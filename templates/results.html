@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+{% block body %}
+<h3>Translation Complete</h3>
+<h4>Stats:</h4>
+{% for line in result %}
+<p> {{line}} </p>
+{% endfor %}
+<p><a href="/">Return to home page</a></p>
+<p><a href="/en">View translated text</a></p>
+{% endblock %}

@@ -68,8 +68,8 @@ def add_walls(istart, iend, tags, l, line):#reordering around conjunctions
     global j, wall
     s = ''
     for t in range(istart, iend):
-        if (tags[t]['POS'] == 'CC' or tags[t]['lemma'] == 'जो') and t not in {0, l-1} and tags[t-1]['coarsePOS'] == 'v':
-            s = ' '.join([s, line[t], '<wall />'])
+        if (tags[t]['POS'] == 'CC' or tags[t]['lemma'] == 'जो') and t not in {0, l-1} and (tags[t-1]['coarsePOS'] == 'v' or (t > 1 and tags[t-1]['POS'] == 'SYM' and tags[t-2]['coarsePOS'] == 'v')):
+            s = ' '.join([s, '<wall />', line[t]])
             wall = True
             j += 1
         else: s = ' '.join([s, line[t]])

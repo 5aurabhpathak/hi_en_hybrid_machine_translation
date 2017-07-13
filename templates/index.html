@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block body %}
+<div id="left" style="float:left; width:50%;">
+	<h3>File input:</h3>
+	<form id = 'fileinput' action = "http://172.17.25.252:5000/file" method = "post" enctype = "multipart/form-data">
+		<p>Upload file to translate containing one sentence per line:</p>
+		<p><input type = "file" name = "f1" /></p>
+		<p>Upload reference file (optional) to get BLEU and METEOR:</p>
+	<p><input type = "file" name = "f2" /></p>
+	<p><input type = "submit" value = "Translate" /></p>
+	</form>
+	<p>Max upload limit is 16MB</p>
+	<h3>Or</h3>
+	<h3>Text input:</h3>
+	<form id = 'textinput' action = "http://172.17.25.252:5000/text" method = "post">
+		<p><input type = "submit" value = "Translate" /></p>
+	</form>
+	<textarea name='text' style="resize:none" cols=100 rows=20 form = "textinput"/>मेरा नाम सौरभ है .</textarea>
+</div>
+<div id="right" style="float:right; width:50%;">
+	<h3>Important Notes:</h3>
+	<ul>
+		<li>This webserver uses static pages.</li>
+		<li>Please make sure file or text input is properly tokenized. No tokenization is performed on the server side.</li>
+		<li>The input must be one sentence per line.</li>
+		<li>The sentence terminator should be '.' instead of '।', or absent entirely.
+	</ul>
+</div>
+{% endblock %}

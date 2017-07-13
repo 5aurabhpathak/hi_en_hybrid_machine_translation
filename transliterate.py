@@ -2,7 +2,7 @@
 #Author: Saurabh Pathak
 #Transliteration module
 from subprocess import Popen, DEVNULL
-import os, data, collections
+import os, data, collections, shutil
 
 j = 0
 
@@ -19,6 +19,9 @@ def translit_file(smt):
                     d[i].append(word)
                     if data.infofile is not None: j += 1
                     inp.write(' '.join(list(word))+'\n')
+    if j == 0:
+        shutil.copy2(smt, '{}/transliterated.out'.format(data.run))
+        return
 
     with open('{}/translit.out'.format(data.run), 'w', encoding='utf-8') as out:
         Popen('moses -f {}/data/train/lowercased/model/hpb/transliterate/tuning/moses.tuned.ini -i {}/translit.in'.format(os.environ['THESISDIR'], data.run).split(), stdout=out, universal_newlines=True, stderr=DEVNULL).wait()

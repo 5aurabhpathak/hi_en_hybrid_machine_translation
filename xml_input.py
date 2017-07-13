@@ -4,7 +4,7 @@ import data, rulebaseprior
 from sys import stderr
 
 def construct(chunkset, line, l, tags, verbose=False):
-    return ' '.join(line) #uncomment this to disable EBMT, RBMT and splitting constraints
+    #return ' '.join(line) #uncomment this to disable EBMT, RBMT and splitting constraints
     if verbose: print('Recombining segments...', sep='', end='', flush=True, file=stderr)
     #Avoiding malformed xml
     temp = []
@@ -39,5 +39,5 @@ def construct(chunkset, line, l, tags, verbose=False):
     rulebaseprior.wall = False
     xml = knapsack(0, l)[1]
     if verbose: print('Done', flush=True, file=stderr)
-    #if rulebaseprior.wall: return xml.split('<wall />')
+    if rulebaseprior.wall: return xml.split('<wall />')
     return xml
