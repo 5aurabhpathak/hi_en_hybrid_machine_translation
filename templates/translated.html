@@ -1,14 +1,16 @@
 {% extends "layout.html" %}
 {% block body %}
 <p><a href="/">Return to homepage</a></p>
-<div id="left" style="float:left; width:50%;">
-	{% for line in inp %}
-	<p> {{line}} </p>
-	{% endfor %}
-</div>
-<div id="right" style="float:right; width:50%;">
-	{% for line in out %}
-	<p> {{line}} </p>
-	{% endfor %}
-</div>
+<table style="width:100%">
+  <tr>
+    <th>Hindi</th>
+    <th>English</th>
+  </tr>
+  {% for hline, eline in out %}
+  <tr>
+        <td> {{hline}} </td>
+        <td> {{eline}} </td>
+  </tr>
+  {% endfor %}
+</table>
 {% endblock %}

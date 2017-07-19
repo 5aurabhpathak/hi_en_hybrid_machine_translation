@@ -27,13 +27,16 @@ def trans():
 @app.route('/en', methods = ['GET'])
 def out():
     with open('/tmp/hi.txt') as f, open(main.run +  '/en.out') as e: inp, out = f.read().splitlines(), e.read().splitlines()
-    return fl.render_template('translated.html', out=out, inp=inp)
+    return fl.render_template('translated.html', out=list(zip(inp, out)))
 
 @app.route('/text', methods = ['POST'])
 def txt():
     txt = fl.request.form['text']
     if txt == '':
         fl.flash('No input given')
+        return fl.redirect('/')
+    if len(txt) > 5000:
+        fl.flash('Text input limit exceeded')
         return fl.redirect('/')
     with open('/tmp/hi.txt', 'w', encoding='utf-8') as inp: inp.write(txt)
     main.translate_file('/tmp/hi.txt')
@@ -42,4 +45,4 @@ def txt():
 
 if __name__ == '__main__':
     main.load_data()
-    app.run('172.17.25.252', 5000)
+    app.run('172.17.25.252', 5000, debug=True)

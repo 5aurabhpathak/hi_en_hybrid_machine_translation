@@ -1,0 +1,171 @@
+/*Author: Saurabh Pathak */
+.vkb-css-keyboard-icon {
+	position: fixed;
+	bottom: 0px;
+	left: 0px;
+	cursor: pointer;
+	opacity: 0.7;
+	width: 85px;
+    height: auto;
+}
+
+.vkb-css-keyboard-icon:hover {	
+	opacity: 1;
+}
+
+.vkb-css-parent-input {
+	padding-right: 25px;
+}
+
+.vkb-css-hide {
+	display: none;
+}
+
+.vkb-css-background {
+	opacity: 0.8;
+	background-color: #000000;
+    bottom: 0;
+    left: 0;
+	position: fixed;
+    right: 0;
+    top: 0;
+    z-index: 1040;
+}
+
+.vkb-button-show-keyboard {
+	position: relative;
+	cursor: pointer;
+	left: -24px;
+	top: 1px;
+	opacity: 0.5;
+	border-radius: 9px 9px 9px 9px;
+    padding: 0px 8px;
+    background-color: #F89406;
+}
+
+.vkb-css-keyboard-box {
+    background-clip: padding-box;
+    background-color: #FFFFFF;
+    border-radius: 6px 6px 6px 6px;
+    left: 50%;
+    margin: -250px 0 0 -280px;
+    overflow: auto;
+    position: fixed;
+    top: 50%;
+    width: 620px;
+    z-index: 1050;
+
+}
+
+.vkb-css-input-box {
+    text-align: center;
+    border-bottom: 1px solid #DDDDDD;
+}
+
+.vkb-css-button-box {
+    padding: 7px;
+}
+
+.vkb-css-footer-box {
+    border-radius: 0 0 6px 6px;
+    border-top: 1px solid #DDDDDD;
+    box-shadow: 0 1px 0 #FFFFFF inset;
+    margin-bottom: 0;
+    padding: 14px 15px 15px;
+    text-align: right;
+}
+
+.vkb-css-input {
+    border: 1px solid #CCCCCC;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+    margin: 10px 0 10px;
+    width: 90%;
+    border-radius: 3px 3px 3px 3px;
+    color: #555555;
+    line-height: 20px;
+    padding: 4px 6px;
+    font-size: 14px;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+
+.vkb-main-input:focus{
+    border-color: rgba(82, 168, 236, 0.8);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(82, 168, 236, 0.6);
+    outline: 0 none;
+}
+
+.vkb-css-button-line {
+    text-align: center;
+    margin-bottom: 5px;
+}
+
+.vkb-css-keyboard-box button {
+    -moz-border-bottom-colors: none;
+    -moz-border-left-colors: none;
+    -moz-border-right-colors: none;
+    -moz-border-top-colors: none;
+    background-color: #F5F5F5;
+    background-image: -moz-linear-gradient(center top , #FFFFFF, #E6E6E6);
+    background-repeat: repeat-x;
+    border-color: #E6E6E6 #E6E6E6 #A2A2A2;
+    border-image: none;
+    border-radius: 4px 4px 4px 4px;
+    border-style: solid;
+    border-width: 1px;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+    color: #333333;
+    cursor: pointer;
+    display: inline-block;
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 0;
+    padding: 4px 14px;
+    text-align: center;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+    vertical-align: middle;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    border-color: rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.15) rgba(0, 0, 0, 0.25);
+}
+
+
+.vkb-css-keyboard-box button:hover {
+    background-color: #E6E6E6;
+    background-position: 0 -15px;
+    color: #333333;
+    text-decoration: none;
+    transition: background-position 0.1s linear 0s;
+}
+
+.vkb-css-keyboard-box button:active {
+    background-color: #363636;
+    background-image: -moz-linear-gradient(center top , #444444, #222222);
+    background-repeat: repeat-x;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    color: #FFFFFF;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+#vkb_32 {
+    width: 260px;
+    height: 30px;
+    margin-right: 60px;
+}
+
+#vkb_success {
+    background-color: #5BB75B;
+    background-image: -moz-linear-gradient(center top , #62C462, #51A351);
+    background-repeat: repeat-x;
+    border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+    color: #FFFFFF;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+}
+
+#vkb_success:hover{
+    background-color: #51A351;
+    color: #FFFFFF;
+}
+
+#vkb_8:hover, #vkb_37:hover, #vkb_39:hover{
+    background-color: #222222;
+    color: #FFFFFF;
+}

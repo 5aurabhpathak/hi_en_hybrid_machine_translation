@@ -109,7 +109,7 @@ def translate_file(text): #file handler.
         assert len(sp) == 0
     else: shutil.copy2('{}/smtsplit.out'.format(run), '{}/smt.out'.format(run))
 
-    #comment the following 4 lines to disable translaiteration and uncomment the fifth line
+    #comment the following 4 lines to disable transliteration and uncomment the fifth line
     print('Done\nTransliterating OOVs...', sep='', end='', flush=True, file=stderr)
     transliterate.translit_file('{}/smt.out'.format(run))
     data.infofile.write('OOVs: {}\n'.format(transliterate.j))

@@ -31,7 +31,7 @@ def graph_col1vscol2(x, y, z):
         pl.yticks(arange(0, max(data[y])+1, 10))
         if x == 'Distortion Limit': i = argmax([(data[y][j] if data[x][j] != 13 else 0) for j in range(len(data))])
         else: i = argmax(data[y])
-        pl.legend(bbox_to_anchor=(1, 1), title=z)
+    pl.legend(bbox_to_anchor=(1, 1), title=z)
     if x == 'Distortion Limit':
         ticks = [str(x) for x in range(13)]+['\u221E'] 
         pl.xticks(arange(0,14,1))

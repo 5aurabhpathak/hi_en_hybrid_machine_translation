@@ -21,21 +21,25 @@ def figplot(prefix, output=environ['THESISDIR']+'/data/'):
     def plotter(t,n,a):
         pl.subplot(n)
         pl.title(t)
-        counts, bins, patches = pl.hist(a, bins=range(0,101,10))
+        counts, bins, patches = pl.hist(a, bins=[0,11,21,31,41,51,61,71,81,91,101])
         pl.xlabel('Sentence lengths in words')
+        xlabels = [0]+[b-1 for b in bins[1:]]
         pl.xticks(bins)
+        pl.gca().set_xticklabels(xlabels)
         pl.ticklabel_format(axis='y', style='sci', scilimits=(0,4))
         pl.xlim(xmin=0)
         pl.ylim(ymin=0)
-        for i, v in enumerate(counts): pl.text(bins[i] + 1, v + 3000, str(round(v/100000,1)))
+        for i, v in enumerate(counts): pl.text(bins[i] + 1, v + 3000, round(v/100000, 1))
+        #for i, v in enumerate(counts): pl.text(bins[i] + 1, v + 3, int(v))
 
     pl.rcParams['patch.force_edgecolor'] = True
-    plotter('en', 121, de)
-    pl.ylabel('Number of sentences ($x10^5$)')
-    plotter('hi', 122, dh)
-    pl.savefig(output+prefix.split('/')[-1]+'.png', format='png')
+    plotter('en', 122, de)
+    plotter('hi', 121, dh)
+    pl.ylabel('Number of sentences (x10$^5$)')
+    #pl.ylabel('Number of sentences')
+    pl.savefig(output+prefix.split('/')[-1]+'.png', format='png', bbox_inches='tight')
     pl.show()
 
 if __name__=="__main__":
-    rcParams.update({'font.size': 14})
+    rcParams.update({'font.size': 16})
     figplot(argv[1])

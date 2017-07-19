@@ -12,10 +12,13 @@
 	<p>Max upload limit is 16MB</p>
 	<h3>Or</h3>
 	<h3>Text input:</h3>
-	<form id = 'textinput' action = "http://172.17.25.252:5000/text" method = "post">
-		<p><input type = "submit" value = "Translate" /></p>
+	<form id = 'textinput' action = "/text" method = "post">
+		<p><input type = "submit" value = "Translate" />&emsp;Maximum character length is 5000.</p>
 	</form>
-	<textarea name='text' style="resize:none" cols=100 rows=20 form = "textinput"/>मेरा नाम सौरभ है .</textarea>
+	<textarea id="text" name="text" style="resize:none" cols=100 rows=15 form="textinput" class="virtualKeyboard" maxlength="5000"/>हम सब भारतीय हैं .</textarea>
+    <script src="{{ url_for('static', filename='jquery.virtualKeyboard.js') }}"></script>
+    <script>$('.virtualKeyboard').vkb();</script>
+    <script src="{{ url_for('static', filename='jquery.googleinput.js') }}"></script>
 </div>
 <div id="right" style="float:right; width:50%;">
 	<h3>Important Notes:</h3>
@@ -23,7 +26,9 @@
 		<li>This webserver uses static pages.</li>
 		<li>Please make sure file or text input is properly tokenized. No tokenization is performed on the server side.</li>
 		<li>The input must be one sentence per line.</li>
-		<li>The sentence terminator should be '.' instead of '।', or absent entirely.
+		<li>The sentence terminator should be '.' instead of '।', or absent entirely.</li>
+		<li>You can enter text using English keyboard directly. It will be transliterated to Hindi automatically. An additional Hindi virtual keyboard has also been provided for convinience.</li>
+		<li>Designed by Saurabh Pathak. Mail any software/security bugs to s.pathak@ieee.org</li>
 	</ul>
 </div>
 {% endblock %}
