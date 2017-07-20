@@ -5,10 +5,14 @@
 	left: 0px;
 	cursor: pointer;
 	opacity: 0.7;
-	width: 85px;
-    height: auto;
+	width: auto;
+    height: 65px;
 }
 
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
 .vkb-css-keyboard-icon:hover {	
 	opacity: 1;
 }

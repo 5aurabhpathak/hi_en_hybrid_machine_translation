@@ -84,7 +84,7 @@ def translate_file(text): #file handler.
     else: filter_rules(text)
 
     print('Have patience. run \'tail-f data/run/smt.out\' if you dont. :)\nMoses is translating...', sep='', end='', flush=True, file=stderr)
-    with open('{}/smtsplit.out'.format(run), 'w', encoding='utf-8') as smt: Popen('moses -f {0}/filetable/moses.ini -xml-input inclusive -i {0}/xml.out'.format(run).split(), universal_newlines=True, stdout=smt).communicate()
+    with open('{}/smtsplit.out'.format(run), 'w', encoding='utf-8') as smt: Popen('moses -f {0}/moses.ini -xml-input inclusive -i {0}/xml.out'.format(run).split(), universal_newlines=True, stdout=smt).communicate()
 
     if splen > 0:
         print('Done\nMerging split points...', sep='', end='', flush=True, file=stderr)
@@ -149,9 +149,8 @@ def translate_file(text): #file handler.
 
 def load_data():
     global bm, run, ini, exact, sp
-    print('Loading example-base...', sep='', end='', flush=True, file=stderr)
     data.load()
-    print('Done\nLoading suffix arrays...', sep='', end='', flush=True, file=stderr)
+    print('Loading suffix arrays...', sep='', end='', flush=True, file=stderr)
     bm = ebmt._BestMatch(data.dbdir, thresh=0.4, mx=5)
     print('Done', flush=True, file=stderr)
     run  = data.run

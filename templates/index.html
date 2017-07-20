@@ -9,11 +9,10 @@
 	<p><input type = "file" name = "f2" /></p>
 	<p><input type = "submit" value = "Translate" /></p>
 	</form>
-	<p>Max upload limit is 16MB</p>
 	<h3>Or</h3>
 	<h3>Text input:</h3>
 	<form id = 'textinput' action = "/text" method = "post">
-		<p><input type = "submit" value = "Translate" />&emsp;Maximum character length is 5000.</p>
+		<p><input type = "submit" value = "Translate" /></p>
 	</form>
 	<textarea id="text" name="text" style="resize:none" cols=100 rows=15 form="textinput" class="virtualKeyboard" maxlength="5000"/>हम सब भारतीय हैं .</textarea>
     <script src="{{ url_for('static', filename='jquery.virtualKeyboard.js') }}"></script>
@@ -28,6 +27,9 @@
 		<li>The input must be one sentence per line.</li>
 		<li>The sentence terminator should be '.' instead of '।', or absent entirely.</li>
 		<li>You can enter text using English keyboard directly. It will be transliterated to Hindi automatically. An additional Hindi virtual keyboard has also been provided for convinience.</li>
+		<li>Maximum file upload size is 100 KB</li>
+		<li>Maximum number of characters in text input is 5000.</li>
+		<li>Maximum allowed length (in words) per sentence is 30.</li>
 		<li>Designed by Saurabh Pathak. Mail any software/security bugs to s.pathak@ieee.org</li>
 	</ul>
 </div>

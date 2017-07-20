@@ -6,9 +6,7 @@
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="{{url_for('static', filename='jquery-2.1.3.js') }}">\x3C/script>')</script>
 	<link rel="stylesheet" href="{{ url_for('static', filename='jquery.virtualKeyboard.css') }}">
-</head>
-{% block body %}
-<h2>Welcome to the SILP Hindi to English Translator</h2>
+<h2>Welcome to SILP Hindi to English Translator</h2>
 {% with messages = get_flashed_messages() %}
 	{% if messages %}
 		<ul class=flashes>
@@ -18,4 +16,5 @@
 		</ul>
 	{% endif %}
 {% endwith %}
+{% block body %}
 {% endblock %}
