@@ -57,5 +57,5 @@ def txt():
 
 if __name__ == '__main__':
     main.load_data() #do not run with debug=True with this line. Causes memory issues
-    app.run('172.17.25.252', 5000)
+    app.run('0.0.0.0', 5000)
     #app.run('172.17.25.252', 5000, debug=True)
