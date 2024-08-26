@@ -1,5 +1,7 @@
 # M. Tech - thesis
+
 ## Title: Improving Accuracy in Hindi to English Machine Translation with a Hybrid Approach
+
 ### Abstract
 Machine Translation still remains a largely unsolved problem. Over the past few decades,
 there have been many approaches to solve it. However, all of these approaches fall short on
@@ -15,8 +17,7 @@ complex sentences from Hindi to English.
 
 THESIS SUBMITTED IN 2017 AND ACCEPTED.
 
-### Full text
-[Read here](https://drive.google.com/file/d/1fjIet5dxgmDcAK827_JAC2CjN1DNwjba/view)
+### [Read full text here](https://drive.google.com/file/d/1fjIet5dxgmDcAK827_JAC2CjN1DNwjba/view)
 
 ### Current status - Complete
 
