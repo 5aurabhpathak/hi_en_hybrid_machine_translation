@@ -1,4 +1,4 @@
-# M. Tech - thesis
+# Masters thesis
 
 ## Title: Improving Accuracy in Hindi to English Machine Translation with a Hybrid Approach
 
